@@ -1,0 +1,41 @@
+{{- if .Values.networkPolicy.enabled }}
+network-policy.yaml: |
+  apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: {{ .Release.Name }}-allow-internal
+    labels:
+      app: {{ template "..name" . }}
+      chart: {{ template "..chart" . }}
+      release: {{ .Release.Name }}
+      heritage: {{ .Release.Service }}
+  spec:
+    podSelector:
+      matchLabels:
+        app: {{ template "..name" . }}
+        release: {{ .Release.Name }}
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: {{ template "..name" . }}
+            release: {{ .Release.Name }}
+  ---
+  apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: {{ .Release.Name }}-allow-from-external
+    labels:
+      app: {{ template "..name" . }}
+      chart: {{ template "..chart" . }}
+      release: {{ .Release.Name }}
+      heritage: {{ .Release.Service }}
+  spec:
+    podSelector:
+      matchLabels:
+        app: {{ template "..name" . }}
+        release: {{ .Release.Name }}
+        allow_from_external: "true"
+    ingress:
+    - from: []
+{{- end }}

@@ -1,0 +1,87 @@
+image:
+  repository: everpeace/kube-openmpi
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+
+kubectlImage:
+  repository: everpeace/kubectl
+  tag: 1.9.2
+  pullPolicy: IfNotPresent
+
+gitSyncImage:
+  repository: gcr.io/google_containers/git-sync
+  tag: v2.0.6
+  pullPolicy: IfNotPresent
+
+networkPolicy:
+  enabled: false
+
+sshGateway:
+  enabled: "false"
+  nodePort: 30220
+
+bootStrap:
+  terminationGracePeriodSeconds: 30
+  clusterStartupTimeout: 30
+  resources:
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+sshKey:
+  # id_rsa: |
+  #   ...
+  # id_rsa_pub: |
+  #   ...
+
+mpiMaster:
+  # command: |
+  #   mpiexec --hostfile /mpi-cluster/hostfile \
+  #     --display-map -n 4 -npernode 1 \
+  #     -- sh -c 'echo $(hostname):hello'
+  resources:
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+mpiWorkers:
+  podManagementPolicy: Parallel
+  num: 4
+  resources:
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    #  gpu: 1
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
+    #  gpu: 1
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+appCodesToSync:
+# - name: chainermn
+#   gitRepo: https://github.com/chainer/chainermn.git
+#   gitBranch: master
+#   fetchWaitSecond: "120"
+#   mountPath: /chainermn-examples
+#   subPath: chainermn/examples
+# - name: chainer
+#   gitRepo: https://github.com/chainer/chainer.git
+#   gitBranch: master
+#   fetchWaitSecond: "120"
+#   mountPath: /chainer-examples
+#   subPath: chainer/examples

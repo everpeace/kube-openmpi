@@ -1,0 +1,67 @@
+image:
+  repository: everpeace/kube-openmpi
+  tag: 0.1.0
+
+networkPolicy:
+  enabled: false
+
+sshGateway:
+  enabled: "false"
+  nodePort: 30220
+
+bootStrap:
+  terminationGracePeriodSeconds: 30
+  clusterStartupTimeout: 30
+  resources:
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+mpiMaster:
+  # command: |
+  #   mpiexec --hostfile $HOSTFILE -n 4 -- echo hello
+  resources:
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+mpiWorkers:
+  num: 4
+  resources:
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    #  gpu: 1
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
+    #  gpu: 1
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+appCodesToSync:
+# - name: chainermn
+#   gitRepo: https://github.com/chainer/chainermn.git
+#   gitBranch: master
+#   fetchWaitSecond: "120"
+#   mountPath: /chainermn-examples
+#   subPath: chainermn/examples
+# - name: chainer
+#   gitRepo: https://github.com/chainer/chainer.git
+#   gitBranch: master
+#   fetchWaitSecond: "120"
+#   mountPath: /chainer-examples
+#   subPath: chainer/examples

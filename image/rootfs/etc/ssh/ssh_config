@@ -1,0 +1,2 @@
+StrictHostKeyChecking no
+IdentityFile /ssh-key/%u/id_rsa
