@@ -122,6 +122,7 @@ data:
         role: master
         {{if .Values.networkPolicy.enabled }}allow_from_external: "true"{{ end }}
     spec:
+      hostname: {{ .Release.Name }}-master
       subdomain: {{ .Release.Name }}
       dnsPolicy: "None"
       dnsConfig:
