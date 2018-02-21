@@ -40,6 +40,8 @@ spec:
       - name: bootstrap
         image: {{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}
         imagePullPolicy: {{ .Values.kubectlImage.pullPolicy }}
+        resources:
+{{ toYaml .Values.bootStrap.resources | indent 10 }}
         lifecycle:
           preStop:
             exec:
