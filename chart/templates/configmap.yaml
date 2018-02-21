@@ -94,7 +94,7 @@ data:
               {{ if .subPath }}subPath: {{.subPath}} {{ end }}
             {{- end }}
             resources:
-{{ toYaml .Values.mpiWorkers.esources | indent 14 }}
+{{ toYaml .Values.mpiWorkers.resources | indent 14 }}
           {{- with .Values.mpiWorkers.nodeSelector }}
           nodeSelector:
 {{ toYaml . | indent 12 }}
@@ -212,7 +212,7 @@ data:
           {{ if .subPath }}subPath: {{.subPath}} {{ end }}
         {{- end }}
         resources:
-{{ toYaml .Values.mpiMaster.esources | indent 10 }}
+{{ toYaml .Values.mpiMaster.resources | indent 10 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
@@ -365,7 +365,7 @@ data:
     wait_for_cluster_up {{ .Values.bootStrap.clusterStartupTimeout }}
 
     log_info "executing user command on mpi master: {{ .Release.Name }}-master"
-    HOST=chainer@$(kubectl -n {{ .Release.Namespace }} get pod {{ .Release.Name }}-master -o jsonpath='{.status.podIP}')
+    HOST=openmpi@$(kubectl -n {{ .Release.Namespace }} get pod {{ .Release.Name }}-master -o jsonpath='{.status.podIP}')
     ssh $SSH_OPTION $HOST << 'EOS'
 
 {{ .Values.mpiMaster.command | indent 4 }}
