@@ -1,0 +1,21 @@
+image:
+  repository: _EDIT_ME_
+  tag: _EDIT_ME_
+
+bootStrap:
+  terminationGracePeriodSeconds: 90
+  clusterStartupTimeout: 90
+
+mpiWorkers:
+  num: 2
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+
+appCodesToSync:
+- name: chainermn
+  gitRepo: https://github.com/chainer/chainermn.git
+  gitBranch: master
+  fetchWaitSecond: "120"
+  mountPath: /chainermn-examples
+  subPath: chainermn/examples

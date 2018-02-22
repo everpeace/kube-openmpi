@@ -99,6 +99,8 @@ image:
 
 It expects that your custom image is based on our base image ([everpeace/kube-openmpi](https://hub.docker.com/r/everpeace/kube-openmpi/)) and does NOT change any ssh/sshd configurations define in `image/Dockerfile` on your custom image.
 
+Please refer to [ChainerMN Example](chainermn-example/README.md) for details.
+
 # Inject your code to your containers from Github
 kube-openmpi supports to import your codes hosted by github into your containers.  To do it, please edit `appCodesToSync` section in `values.yaml`.  You can define multiple github repositories.
 
