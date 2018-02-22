@@ -1,4 +1,4 @@
-KUBE_OPENMPI_VERSION ?= 0.1.0
+KUBE_OPENMPI_VERSION ?= 0.2.0
 REPOSITORY ?= everpeace/kube-openmpi
 
 OPENMPI_VERSION ?= 2.1.2
@@ -25,7 +25,7 @@ ubuntu_image:
 	docker build \
 		--build-arg UBUNTU_BASED_BASE_IMAGE=$(UBUNTU_REPOSITORY):$(UBUNTU_TAG) \
 		--build-arg OPENMPI_VERSION=$(OPENMPI_VERSION) \
-		--build-arg WITH_CUDA=false \
+		--build-arg WITH_CUDA="false" \
 		-t $(UBUNTU_IMAGE) \
 		. && \
 		docker tag $(UBUNTU_IMAGE) $(UBUNTU_ALIAS)
@@ -34,7 +34,7 @@ cuda8_image:
 	docker build \
 		--build-arg UBUNTU_BASED_BASE_IMAGE=$(CUDA_REPOSITORY):$(CUDA8_BASE_IMAGE_TAG) \
 		--build-arg OPENMPI_VERSION=$(OPENMPI_VERSION) \
-		--build-arg WITH_CUDA=true \
+		--build-arg WITH_CUDA="true" \
 		-t $(CUDA8_IMAGE) \
 		. && \
 		docker tag $(CUDA8_IMAGE) $(CUDA8_ALIAS)
@@ -43,7 +43,7 @@ cuda9_image:
 	docker build \
 		--build-arg UBUNTU_BASED_BASE_IMAGE=$(CUDA_REPOSITORY):$(CUDA9_BASE_IMAGE_TAG) \
 		--build-arg OPENMPI_VERSION=$(OPENMPI_VERSION) \
-		--build-arg WITH_CUDA=true \
+		--build-arg WITH_CUDA="true" \
 		-t $(CUDA9_IMAGE) \
 		. && \
 		docker tag $(CUDA9_IMAGE) $(CUDA9_ALIAS)
