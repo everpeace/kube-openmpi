@@ -85,6 +85,8 @@ data:
           - name: mpi-worker
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
+            ports:
+            - containerPort: 2022
             volumeMounts:
             - name: ssh-key
               mountPath: /ssh-key/openmpi
@@ -198,7 +200,7 @@ data:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-        - containerPort: 22
+        - containerPort: 2022
         env:
         - name: HOSTFILE
           value: /mpi-cluster/hostfile
