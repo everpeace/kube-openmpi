@@ -343,7 +343,7 @@ data:
 
 
   run.sh: |
-    set -euv -o pipefail
+    set -eu -o pipefail
     SCRIPT_DIR=$(cd $(dirname $0);pwd)
     source $SCRIPT_DIR/util.sh
 
