@@ -51,6 +51,8 @@ data:
               options:
                 - name: ndots
                   value: "5"
+          securityContext:
+{{ toYaml .Values.mpiWorkers.securityContext | indent 12 }}
           volumes:
           - name: ssh-key
             secret:
@@ -138,6 +140,8 @@ data:
           options:
             - name: ndots
               value: "5"
+      securityContext:
+{{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
       volumes:
       - name: hostfile-dir
         emptyDir: {}

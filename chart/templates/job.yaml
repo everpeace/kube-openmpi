@@ -25,6 +25,8 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.bootStrap.terminationGracePeriodSeconds }}
       restartPolicy: Never
       subdomain: {{ .Release.Name }}
+      securityContext:
+{{ toYaml .Values.bootStrap.securityContext | indent 8 }}
       volumes:
       - name: manifests
         configMap:
