@@ -6,7 +6,7 @@ networkPolicy:
   enabled: false
 
 sshGateway:
-  enabled: "false"
+  enabled: false
   nodePort: 30220
 
 bootStrap:

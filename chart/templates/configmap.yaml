@@ -51,6 +51,8 @@ data:
               options:
                 - name: ndots
                   value: "5"
+          securityContext:
+{{ toYaml .Values.mpiWorkers.securityContext | indent 12 }}
           volumes:
           - name: ssh-key
             secret:
@@ -85,6 +87,8 @@ data:
           - name: mpi-worker
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
+            ports:
+            - containerPort: 2022
             volumeMounts:
             - name: ssh-key
               mountPath: /ssh-key/openmpi
@@ -136,6 +140,8 @@ data:
           options:
             - name: ndots
               value: "5"
+      securityContext:
+{{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
       volumes:
       - name: hostfile-dir
         emptyDir: {}
@@ -198,7 +204,7 @@ data:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-        - containerPort: 22
+        - containerPort: 2022
         env:
         - name: HOSTFILE
           value: /mpi-cluster/hostfile
@@ -249,7 +255,7 @@ data:
     function log() {
       local level=$(echo ${1:-info} | tr '[:lower:]' '[:upper:]')
       shift
-      echo "[$(_date)][{{.Release.Namespace}}-driver][${level}] $@"
+      echo "[$(_date)][kube-openmpi-driver][${level}] $@"
     }
     function log_debug() {
       if [ -n "$DEBUG" ]; then log debug $@; fi
@@ -266,19 +272,23 @@ data:
 
     # Signal Handler
     function stop_cluster() {
-      log_info "cleaning up mpi cluster."
+      log_info "cleaning up mpi cluster {{ .Release.Name }}."
 
-      local worker=$(kubectl -n {{ .Release.Namespace }} get statefulset/{{ .Release.Name }}-worker -o jsonpath='{.metadata.name}')
-      if [ -n "$worker" ]; then worker=statefulset/$worker; fi
-      local master=$(kubectl -n {{ .Release.Namespace }} get pod/{{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
-      if [ -n "$master" ]; then master=pod/$master; fi
-
-      if [ -n "$master$worker" ]; then
-        kubectl -n {{ .Release.Namespace }} delete $master $worker
+      local master=$(kubectl -n {{ .Release.Namespace }} get pod {{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
+      if [ -n "$master" ]; then
+        kubectl -n {{ .Release.Namespace }} delete pod $master
       else
-        log_warning "mpi cluster ({{ .Release.Namespace }}-master,{{ .Release.Namespace }}-worker) is already deleted."
+        log_warning "{{ .Release.Name }}-master is already deleted."
+      fi
+
+      local worker=$(kubectl -n {{ .Release.Namespace }} get statefulsets {{ .Release.Name }}-worker -o jsonpath='{.metadata.name}')
+      if [ -n "$worker" ]; then
+        kubectl -n {{ .Release.Namespace }} delete statefulsets $worker
+      else
+        log_warning "{{ .Release.Name }}-worker is already deleted."
       fi;
     }
+
     function signal_handler() {
       local ret_code=$?
       log_info "running signal handler. "
@@ -343,7 +353,7 @@ data:
 
 
   run.sh: |
-    set -euv -o pipefail
+    set -eu -o pipefail
     SCRIPT_DIR=$(cd $(dirname $0);pwd)
     source $SCRIPT_DIR/util.sh
 
@@ -355,11 +365,13 @@ data:
     log_info "bootstrapping mpi cluster: {{ .Release.Name }}"
     render_manifest /manifests/mpi-master.yaml
     render_manifest /manifests/mpi-worker.yaml
-    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-worker.yaml
-    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-master.yaml
 
     log_info "installing signal handlers to make sure cleaning up mpi cluster."
     trap signal_handler EXIT TERM INT KILL
+
+    log_info "starting up mpi cluster"
+    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-worker.yaml
+    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-master.yaml
 
     {{- if .Values.mpiMaster.command }}
     log_info "waiting for mpi cluster booting up"
