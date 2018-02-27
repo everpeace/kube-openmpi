@@ -1,4 +1,4 @@
-FROM everpeace/kube-openmpi:0.2.0-cuda8.0
+FROM everpeace/kube-openmpi:0.3.0-cuda8.0
 
 ARG NCCL_PACKAGE_VERSION="2.1.4-1+cuda8.0"
 ARG CUPY_VERSION="4.0.0b3"

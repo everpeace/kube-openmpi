@@ -6,12 +6,12 @@ kube-openmpi provides mainly two things:
 - [base docker images on DockerHub](https://hub.docker.com/r/everpeace/kube-openmpi/) to build your custom docker images.  Currently we provide only ubuntu 16.04 based imaages.  To support distributed deep learning workloads, we provides cuda based images, too.  Supported tags are below:
 
 # Supported tags of kube-openmpi base images
-- Plain Ubuntu based: `2.1.2-16.04-0.1.0` / `0.2.0`
+- Plain Ubuntu based: `2.1.2-16.04-0.1.0` / `0.3.0`
   - naming convention: `$(OPENMPI_VERSION)-$(UBUNTU_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(UBUNTU_IMAGE_TAG)` refers to tags of [ubuntu](https://hub.docker.com/_/ubuntu/)
 - Cuda (with cuDNN) based :
-  - cuda8: `2.1.2-8.0-cudnn7-devel-ubuntu16.04-0.2.0` / `0.2.0-cuda8`
-  - cuda9: `2.1.2-9.0-cudnn7-devel-ubuntu16.04-0.2.0` / `0.2.0-cuda9`
+  - cuda8: `2.1.2-8.0-cudnn7-devel-ubuntu16.04-0.3.0` / `0.3.0-cuda8`
+  - cuda9: `2.1.2-9.0-cudnn7-devel-ubuntu16.04-0.3.0` / `0.3.0-cuda9`
   - naming convention is `$(OPENMPI_VERSION)-$(CUDA_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(CUDA_IMAGE_TAG)` refers to tags of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda/)
 
@@ -115,6 +115,14 @@ appCodesToSync:
 
 
 ## Release Notes
+### __0.3.0__
+- docker images:
+  - removed s6-overlay init process and introduced self-managed sshd script to support `securityContext` (e.g. `securityContext.runAs`) (#1).
+- kubernetes manifests:
+  - supported custom `securityContext` (#1)
+  - improved mpi-cluster cleanup process
+  - fixed broken network-policy maniefst
+
 ### __0.2.0__
 - docker images:
   - fixed cuda-aware openMPI installation script. added ensure `mca:mpi:base:param:mpi_built_with_cuda_support:value:true` when cuda based image was built.  You can NOT use open MPI with CUDA on `0.1.0`.  So, please use `0.2.0`.
