@@ -249,7 +249,7 @@ data:
     function log() {
       local level=$(echo ${1:-info} | tr '[:lower:]' '[:upper:]')
       shift
-      echo "[$(_date)][{{.Release.Namespace}}-driver][${level}] $@"
+      echo "[$(_date)][kube-openmpi-driver][${level}] $@"
     }
     function log_debug() {
       if [ -n "$DEBUG" ]; then log debug $@; fi
