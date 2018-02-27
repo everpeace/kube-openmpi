@@ -355,11 +355,13 @@ data:
     log_info "bootstrapping mpi cluster: {{ .Release.Name }}"
     render_manifest /manifests/mpi-master.yaml
     render_manifest /manifests/mpi-worker.yaml
-    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-worker.yaml
-    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-master.yaml
 
     log_info "installing signal handlers to make sure cleaning up mpi cluster."
     trap signal_handler EXIT TERM INT KILL
+
+    log_info "starting up mpi cluster"
+    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-worker.yaml
+    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-master.yaml
 
     {{- if .Values.mpiMaster.command }}
     log_info "waiting for mpi cluster booting up"
