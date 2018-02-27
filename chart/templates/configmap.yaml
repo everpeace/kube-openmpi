@@ -266,19 +266,23 @@ data:
 
     # Signal Handler
     function stop_cluster() {
-      log_info "cleaning up mpi cluster."
+      log_info "cleaning up mpi cluster {{ .Release.Name }}."
+
+      local master=$(kubectl -n {{ .Release.Namespace }} get pod/{{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
+      if [ -n "$master" ]; then
+        kubectl -n {{ .Release.Namespace }} delete pod/$master;
+      else
+        log_warning "{{ .Release.Namespace }}-master is already deleted."
+      fi
 
       local worker=$(kubectl -n {{ .Release.Namespace }} get statefulset/{{ .Release.Name }}-worker -o jsonpath='{.metadata.name}')
-      if [ -n "$worker" ]; then worker=statefulset/$worker; fi
-      local master=$(kubectl -n {{ .Release.Namespace }} get pod/{{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
-      if [ -n "$master" ]; then master=pod/$master; fi
-
-      if [ -n "$master$worker" ]; then
-        kubectl -n {{ .Release.Namespace }} delete $master $worker
+      if [ -n "$worker" ]; then
+        kubectl -n {{ .Release.Namespace }} delete statefulset/$worker
       else
-        log_warning "mpi cluster ({{ .Release.Namespace }}-master,{{ .Release.Namespace }}-worker) is already deleted."
+        log_warning "{{ .Release.Name }}-workeris already deleted."
       fi;
     }
+
     function signal_handler() {
       local ret_code=$?
       log_info "running signal handler. "
