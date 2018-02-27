@@ -51,6 +51,8 @@ data:
               options:
                 - name: ndots
                   value: "5"
+          securityContext:
+{{ toYaml .Values.mpiWorkers.securityContext | indent 12 }}
           volumes:
           - name: ssh-key
             secret:
@@ -85,6 +87,8 @@ data:
           - name: mpi-worker
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
+            ports:
+            - containerPort: 2022
             volumeMounts:
             - name: ssh-key
               mountPath: /ssh-key/openmpi
@@ -136,6 +140,8 @@ data:
           options:
             - name: ndots
               value: "5"
+      securityContext:
+{{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
       volumes:
       - name: hostfile-dir
         emptyDir: {}
@@ -198,7 +204,7 @@ data:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-        - containerPort: 22
+        - containerPort: 2022
         env:
         - name: HOSTFILE
           value: /mpi-cluster/hostfile
@@ -268,18 +274,18 @@ data:
     function stop_cluster() {
       log_info "cleaning up mpi cluster {{ .Release.Name }}."
 
-      local master=$(kubectl -n {{ .Release.Namespace }} get pod/{{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
+      local master=$(kubectl -n {{ .Release.Namespace }} get pod {{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
       if [ -n "$master" ]; then
-        kubectl -n {{ .Release.Namespace }} delete pod/$master;
+        kubectl -n {{ .Release.Namespace }} delete pod $master
       else
-        log_warning "{{ .Release.Namespace }}-master is already deleted."
+        log_warning "{{ .Release.Name }}-master is already deleted."
       fi
 
-      local worker=$(kubectl -n {{ .Release.Namespace }} get statefulset/{{ .Release.Name }}-worker -o jsonpath='{.metadata.name}')
+      local worker=$(kubectl -n {{ .Release.Namespace }} get statefulsets {{ .Release.Name }}-worker -o jsonpath='{.metadata.name}')
       if [ -n "$worker" ]; then
-        kubectl -n {{ .Release.Namespace }} delete statefulset/$worker
+        kubectl -n {{ .Release.Namespace }} delete statefulsets $worker
       else
-        log_warning "{{ .Release.Name }}-workeris already deleted."
+        log_warning "{{ .Release.Name }}-worker is already deleted."
       fi;
     }
 

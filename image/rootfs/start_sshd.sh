@@ -1,18 +1,36 @@
+#! /bin/sh
+
+# Generating ephemeral hostkeys
+ssh-keygen -f /.sshd/host_keys/host_rsa_key -C '' -N '' -t rsa
+ssh-keygen -f /.sshd/host_keys/host_dsa_key -C '' -N '' -t dsa
+
+# copy mounted user($SSH_USER) key files to local directory
+# to correct their permissions (600 for files, 700 for directories).
+mkdir -p /.sshd/user_keys/$SSH_USER
+chmod 700 /.sshd/user_keys/$SSH_USER
+chown $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER
+cp /ssh-key/$SSH_USER/* /.sshd/user_keys/$SSH_USER/
+chmod 600 /.sshd/user_keys/$SSH_USER/*
+chown $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER/*
+
+# generating sshd_config
+cat << EOT > /.sshd/sshd_config
 # Package generated configuration file
 # See the sshd_config(5) manpage for details
 
 # What ports, IPs and protocols we listen for
-Port 22
+Port 2022
 # Use these options to restrict which interfaces/protocols sshd will bind to
 #ListenAddress ::
 #ListenAddress 0.0.0.0
 Protocol 2
+
 # HostKeys for protocol version 2
-HostKey /etc/ssh/ssh_host_rsa_key
-HostKey /etc/ssh/ssh_host_dsa_key
-HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /.sshd/host_keys/host_rsa_key
+HostKey /.sshd/host_keys/host_dsa_key
+
 #Privilege Separation is turned on for security
-UsePrivilegeSeparation yes
+UsePrivilegeSeparation no
 
 # Lifetime and size of ephemeral version 1 server key
 KeyRegenerationInterval 3600
@@ -29,7 +47,7 @@ StrictModes yes
 
 RSAAuthentication yes
 PubkeyAuthentication yes
-AuthorizedKeysFile /ssh-key/%u/authorized_keys
+AuthorizedKeysFile /.sshd/user_keys/%u/authorized_keys
 
 # Don't read the user's ~/.rhosts and ~/.shosts files
 IgnoreRhosts yes
@@ -47,28 +65,12 @@ PermitEmptyPasswords no
 # some PAM modules and threads)
 ChallengeResponseAuthentication no
 
-# Change to no to disable tunnelled clear text passwords
-#PasswordAuthentication yes
-
-# Kerberos options
-#KerberosAuthentication no
-#KerberosGetAFSToken no
-#KerberosOrLocalPasswd yes
-#KerberosTicketCleanup yes
-
-# GSSAPI options
-#GSSAPIAuthentication no
-#GSSAPICleanupCredentials yes
-
 X11Forwarding yes
 X11DisplayOffset 10
 PrintMotd no
 PrintLastLog yes
 TCPKeepAlive yes
 #UseLogin no
-
-#MaxStartups 10:30:60
-#Banner /etc/issue.net
 
 # Allow client to pass locale environment variables
 AcceptEnv LANG LC_*
@@ -84,4 +86,18 @@ Subsystem sftp /usr/lib/openssh/sftp-server
 # If you just want the PAM account and session checks to run without
 # PAM authentication, then enable this but set PasswordAuthentication
 # and ChallengeResponseAuthentication to 'no'.
-UsePAM yes
+UsePAM no
+
+# we need this to set various variables (LD_LIBRARY_PATH etc.) for users
+# since sshd wipes all previously set environment variables when opening
+# a new session
+PermitUserEnvironment yes
+EOT
+
+# dummy supervisor..
+while true
+do
+  echo "starting sshd"
+  /usr/sbin/sshd -eD -f /.sshd/sshd_config
+  echo "sshd exited with return code $?"
+done
