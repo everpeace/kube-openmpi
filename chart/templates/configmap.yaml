@@ -274,16 +274,16 @@ data:
     function stop_cluster() {
       log_info "cleaning up mpi cluster {{ .Release.Name }}."
 
-      local master=$(kubectl -n {{ .Release.Namespace }} get pod/{{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
+      local master=$(kubectl -n {{ .Release.Namespace }} get pod {{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
       if [ -n "$master" ]; then
-        kubectl -n {{ .Release.Namespace }} delete pod/$master;
+        kubectl -n {{ .Release.Namespace }} delete pod $master
       else
         log_warning "{{ .Release.Name }}-master is already deleted."
       fi
 
-      local worker=$(kubectl -n {{ .Release.Namespace }} get statefulset/{{ .Release.Name }}-worker -o jsonpath='{.metadata.name}')
+      local worker=$(kubectl -n {{ .Release.Namespace }} get statefulsets {{ .Release.Name }}-worker -o jsonpath='{.metadata.name}')
       if [ -n "$worker" ]; then
-        kubectl -n {{ .Release.Namespace }} delete statefulset/$worker
+        kubectl -n {{ .Release.Namespace }} delete statefulsets $worker
       else
         log_warning "{{ .Release.Name }}-worker is already deleted."
       fi;
