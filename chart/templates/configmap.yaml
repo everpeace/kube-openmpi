@@ -39,18 +39,6 @@ data:
             heritage: {{ .Release.Service }}
             role: worker
         spec:
-          dnsPolicy: "None"
-          dnsConfig:
-              nameservers:
-                - %%KUBE_DNS_CLUSTER_IP%%
-              searches:
-                - {{ .Release.Name }}.{{ .Release.Namespace }}.svc.%%CLUSTER_DOMAIN%%
-                - {{ .Release.Namespace }}.svc.%%CLUSTER_DOMAIN%%
-                - svc.%%CLUSTER_DOMAIN%%
-                - %%CLUSTER_DOMAIN%%
-              options:
-                - name: ndots
-                  value: "5"
           securityContext:
 {{ toYaml .Values.mpiWorkers.securityContext | indent 12 }}
           volumes:
@@ -128,18 +116,6 @@ data:
     spec:
       hostname: {{ .Release.Name }}-master
       subdomain: {{ .Release.Name }}
-      dnsPolicy: "None"
-      dnsConfig:
-          nameservers:
-            - %%KUBE_DNS_CLUSTER_IP%%
-          searches:
-            - {{ .Release.Name }}.{{ .Release.Namespace }}.svc.%%CLUSTER_DOMAIN%%
-            - {{ .Release.Namespace }}.svc.%%CLUSTER_DOMAIN%%
-            - svc.%%CLUSTER_DOMAIN%%
-            - %%CLUSTER_DOMAIN%%
-          options:
-            - name: ndots
-              value: "5"
       securityContext:
 {{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
       volumes:
@@ -190,7 +166,7 @@ data:
                 -o=jsonpath='{.items[*].metadata.name}')
               rm -f $HOSTFILE
               for p in ${pod_names}; do
-                echo "${p}" >> $HOSTFILE
+                echo "${p}.{{ .Release.Name }}" >> $HOSTFILE
               done
             done
         env:

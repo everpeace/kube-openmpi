@@ -19,13 +19,8 @@ kube-openmpi provides mainly two things:
 ## Requirements
 - kubectl: follow [the installation step](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [helm](https://github.com/kubernetes/helm) client: follow [the installatin step](https://docs.helm.sh/using_helm/#installing-the-helm-client).
-- Kubernetes cluster with `CustomPodDNS` feature gate.
-  - __NOTE: due to [this issue](https://github.com/kubernetes/kubernetes/issues/48019), this chart uses `dnsPolicy: None` and `dnsConfig`.  So, the cluster administrator needs to enable the `CustomPodDNS` feature gate on the apiserver and the kubelet as [explained here](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pods-dns-config).__
-  - If you used [minikube](https://github.com/kubernetes/minikube), you can enable the feature gate on start like this:
+- Kubernetes cluster ([minikube](https://github.com/kubernetes/minikube) is super-handy for local test.)
 
-    ```
-    minikube start --feature-gates CustomPodDNS=true
-    ```
 
 ## Generate ssh keys and edit configuration
 ```
