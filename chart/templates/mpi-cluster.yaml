@@ -75,7 +75,7 @@ spec:
         - containerPort: 2022
         volumeMounts:
         - name: ssh-key
-          mountPath: /ssh-key/openmpi
+          mountPath: /.ssh-key
         - name: utils
           mountPath: /kube-openmpi/utils
         {{- range .Values.appCodesToSync }}
@@ -135,7 +135,7 @@ spec:
   - name: ssh-key
     secret:
       secretName: {{ .Release.Name }}-ssh-key
-      defaultMode: 256
+      defaultMode: 292
   {{- range .Values.appCodesToSync }}
   - name: {{ .name }}
     emptyDir: {}
@@ -215,7 +215,7 @@ spec:
       value: /kube-openmpi/generated/hostfile
     volumeMounts:
     - name: ssh-key
-      mountPath: /ssh-key/openmpi
+      mountPath: /.ssh-key
     - name: hostfile-dir
       mountPath: /kube-openmpi/generated/
     - name: utils

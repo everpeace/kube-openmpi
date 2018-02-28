@@ -1,4 +1,4 @@
 StrictHostKeyChecking no
-IdentityFile /.sshd/user_keys/%u/id_rsa
+IdentityFile /.sshd/%u/id_rsa
 Port 2022
 UserKnownHostsFile=/dev/null

@@ -1,20 +1,40 @@
 #! /bin/sh
 
-# Generating ephemeral hostkeys
-ssh-keygen -f /.sshd/host_keys/host_rsa_key -C '' -N '' -t rsa
-ssh-keygen -f /.sshd/host_keys/host_dsa_key -C '' -N '' -t dsa
+# detecting userinfo which runs this script.
+ME=$(id -u)
+MY_NAME=$(getent passwd "$ME" | cut -d: -f1)
 
-# copy mounted user($SSH_USER) key files to local directory
+if [ "$ME" = "0" ]; then
+  PERMIT_ROOT_LOGIN=yes
+else
+  PERMIT_ROOT_LOGIN=no
+fi
+
+# Please mount ssh key here.
+MOUNTED_KEY_DIR=${KEY_DIR:-/.ssh-key}
+
+# local sshd key dirs
+# SSHD_DIR must match with IdentitiFile entry
+# in /etc/ssh/ssh_config
+BASE_DIR=/.sshd
+SSHD_DIR=/.sshd/$MY_NAME
+
+# Generating ephemeral hostkeys
+mkdir -p $SSHD_DIR
+ssh-keygen -f $SSHD_DIR/host_rsa_key -C '' -N '' -t rsa
+ssh-keygen -f $SSHD_DIR/host_dsa_key -C '' -N '' -t dsa
+
+# copy mounted ssh key files to local directory
 # to correct their permissions (600 for files, 700 for directories).
-mkdir -p /.sshd/user_keys/$SSH_USER
-chmod 700 /.sshd/user_keys/$SSH_USER
-chown $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER
-cp /ssh-key/$SSH_USER/* /.sshd/user_keys/$SSH_USER/
-chmod 600 /.sshd/user_keys/$SSH_USER/*
-chown $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER/*
+mkdir -p $SSHD_DIR
+chmod 700 $SSHD_DIR
+chown $MY_NAME:$MY_NAME $SSHD_DIR
+cp $MOUNTED_KEY_DIR/* $SSHD_DIR
+chmod 600 $SSHD_DIR/*
+chown $MY_NAME:$MY_NAME $SSHD_DIR/*
 
 # generating sshd_config
-cat << EOT > /.sshd/sshd_config
+cat << EOT > $SSHD_DIR/sshd_config
 # Package generated configuration file
 # See the sshd_config(5) manpage for details
 
@@ -26,8 +46,8 @@ Port 2022
 Protocol 2
 
 # HostKeys for protocol version 2
-HostKey /.sshd/host_keys/host_rsa_key
-HostKey /.sshd/host_keys/host_dsa_key
+HostKey $SSHD_DIR/host_rsa_key
+HostKey $SSHD_DIR/host_dsa_key
 
 #Privilege Separation is turned on for security
 UsePrivilegeSeparation no
@@ -42,12 +62,12 @@ LogLevel INFO
 
 # Authentication:
 LoginGraceTime 120
-PermitRootLogin no
+PermitRootLogin $PERMIT_ROOT_LOGIN
 StrictModes yes
 
 RSAAuthentication yes
 PubkeyAuthentication yes
-AuthorizedKeysFile /.sshd/user_keys/%u/authorized_keys
+AuthorizedKeysFile $BASE_DIR/%u/authorized_keys
 
 # Don't read the user's ~/.rhosts and ~/.shosts files
 IgnoreRhosts yes
@@ -98,6 +118,6 @@ EOT
 while true
 do
   echo "starting sshd"
-  /usr/sbin/sshd -eD -f /.sshd/sshd_config
+  /usr/sbin/sshd -eD -f $SSHD_DIR/sshd_config
   echo "sshd exited with return code $?"
 done

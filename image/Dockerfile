@@ -31,22 +31,18 @@ RUN cd /tmp && \
   make install && \
   rm -r /tmp/openmpi-$OPENMPI_VERSION
 
-# Create ssh user(openmpi) and setup ssh key dir
-# - ssh identity file and authorized key file is expected to
-#   be mounted at /ssh-keys/$SSH_USER
-ARG SSH_USER=openmpi
-ENV SSH_USER=$SSH_USER
-ARG SSH_UID=1000
-ARG SSH_GID=1000
-RUN addgroup --gid $SSH_GID openmpi
-RUN adduser -q --gecos "" --disabled-password --uid $SSH_UID --gid $SSH_GID $SSH_USER
-RUN mkdir -p /ssh-key/$SSH_USER && chown -R $SSH_USER:$SSH_USER /ssh-key/$SSH_USER
-RUN mkdir -p /.sshd/host_keys && chown -R $SSH_USER:$SSH_USER /.sshd && chmod 700 /.sshd
-VOLUME /ssh-key/$SSH_USER
-
-ARG HOME=/home/$SSH_USER
-RUN mkdir -p $HOME && chown $SSH_USER:$SSH_USER $HOME && chmod 755 $HOME
-VOLUME $HOME
+# If the container run with custom uid
+# the process can't provision users.
+# So, we create bunch of users for specific user id range.
+ARG SSH_UID_MIN
+ARG SSH_UID_MAX
+RUN for id in $(seq $SSH_UID_MIN $SSH_UID_MAX); do \
+  addgroup --gid $id user_$id; \
+  adduser -q --gecos "" --disabled-password --uid $id --gid $id user_$id; \
+  mkdir -p /.sshd/user_$id; \
+  chown user_$id:user_$id /.sshd/user_$id; \
+  chmod 700 /.sshd/user_$id; \
+  done
 
 COPY rootfs /
 
