@@ -1,6 +1,6 @@
 image:
   repository: everpeace/kube-openmpi
-  tag: 0.1.0
+  tag: 0.3.0
   pullPolicy: IfNotPresent
 
 kubectlImage:
@@ -17,7 +17,7 @@ networkPolicy:
   enabled: false
 
 sshGateway:
-  enabled: "false"
+  enabled: false
   nodePort: 30220
 
 bootStrap:
