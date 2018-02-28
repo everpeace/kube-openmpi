@@ -148,6 +148,7 @@ appCodesToSync:
 
 
 # TODO
+- [ ] How to use custom user id
 - [ ] automate the process (create kube-openmpi commnd?)
 - [ ] document chart parameters
 - [ ] add additional volume mounts
