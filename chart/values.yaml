@@ -1,6 +1,6 @@
 image:
   repository: everpeace/kube-openmpi
-  tag: 0.3.0
+  tag: 0.4.0
   pullPolicy: IfNotPresent
 
 kubectlImage:
