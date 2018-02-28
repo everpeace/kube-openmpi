@@ -1,367 +1,45 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-cluster
+  name: {{ .Release.Name }}-assets
   labels:
     app: {{ template "..name" . }}
     chart: {{ template "..chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
-  mpi-worker.yaml: |
-    apiVersion: apps/v1
-    kind: StatefulSet
-    metadata:
-      name: {{ .Release.Name }}-worker
-      labels:
-        app: {{ template "..name" . }}
-        chart: {{ template "..chart" . }}
-        release: {{ .Release.Name }}
-        heritage: {{ .Release.Service }}
-        role: worker
-    spec:
-      selector:
-        matchLabels:
-          app: {{ template "..name" . }}
-          chart: {{ template "..chart" . }}
-          release: {{ .Release.Name }}
-          heritage: {{ .Release.Service }}
-          role: worker
-      serviceName: {{ .Release.Name }}
-      podManagementPolicy: {{.Values.mpiWorkers.podManagementPolicy}}
-      replicas: {{.Values.mpiWorkers.num}}
-      template:
-        metadata:
-          labels:
-            app: {{ template "..name" . }}
-            chart: {{ template "..chart" . }}
-            release: {{ .Release.Name }}
-            heritage: {{ .Release.Service }}
-            role: worker
-        spec:
-          securityContext:
-{{ toYaml .Values.mpiWorkers.securityContext | indent 12 }}
-          volumes:
-          - name: ssh-key
-            secret:
-              secretName: {{ .Release.Name }}-ssh-key
-              defaultMode: 256
-          {{- range .Values.appCodesToSync }}
-          - name: {{ .name }}
-            emptyDir: {}
-          {{- end }}
-          initContainers:
-          {{- $root := . -}}
-          {{- range .Values.appCodesToSync }}
-          - name: {{ .name }}-fetch
-            image: {{ $root.Values.gitSyncImage.repository }}:{{ $root.Values.gitSyncImage.tag }}
-            imagePullPolicy: {{ $root.Values.gitSyncImage.pullPolicy }}
-            env:
-            - name: GIT_SYNC_REPO
-              value: {{ .gitRepo }}
-            - name: GIT_SYNC_BRANCH
-              value: {{ .gitBranch }}
-            - name: GIT_SYNC_DEST
-              value: {{ .name }}
-            - name: GIT_SYNC_ONE_TIME
-              value: "true"
-            - name: GIT_SYNC_WAIT
-              value: {{ .fetchWaitSecond | default "0" | quote }}
-            volumeMounts:
-            - name: {{ .name }}
-              mountPath: /git
-          {{- end }}
-          containers:
-          - name: mpi-worker
-            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-            imagePullPolicy: {{ .Values.image.pullPolicy }}
-            ports:
-            - containerPort: 2022
-            volumeMounts:
-            - name: ssh-key
-              mountPath: /ssh-key/openmpi
-            {{- range .Values.appCodesToSync }}
-            - name: {{ .name }}
-              mountPath: {{ .mountPath }}
-              {{ if .subPath }}subPath: {{.subPath}} {{ end }}
-            {{- end }}
-            resources:
-{{ toYaml .Values.mpiWorkers.resources | indent 14 }}
-          {{- with .Values.mpiWorkers.nodeSelector }}
-          nodeSelector:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with .Values.mpiWorkers.tolerations }}
-          tolerations:
-{{ toYaml . | indent 12 }}
-          {{- end }}
-          {{- with .Values.mpiWorkers.affinity }}
-          affinity:
-{{ toYaml . | indent 12 }}
-          {{- end }}
+  gen_hostfile.sh: |
+    set -xev
 
+    target=$1
+    max_try=$2
 
-  mpi-master.yaml: |
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: {{ .Release.Name }}-master
-      labels:
-        app: {{ template "..name" . }}
-        chart: {{ template "..chart" . }}
-        release: {{ .Release.Name }}
-        heritage: {{ .Release.Service }}
-        role: master
-        {{if .Values.networkPolicy.enabled }}allow_from_external: "true"{{ end }}
-    spec:
-      hostname: {{ .Release.Name }}-master
-      subdomain: {{ .Release.Name }}
-      securityContext:
-{{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
-      volumes:
-      - name: hostfile-dir
-        emptyDir: {}
-      - name: ssh-key
-        secret:
-          secretName: {{ .Release.Name }}-ssh-key
-          defaultMode: 256
-      {{- range .Values.appCodesToSync }}
-      - name: {{ .name }}
-        emptyDir: {}
-      {{- end }}
-      initContainers:
-      {{- $root := . }}
-      {{- range .Values.appCodesToSync }}
-      - name: {{ .name }}-fetch
-        image: {{ $root.Values.gitSyncImage.repository }}:{{ $root.Values.gitSyncImage.tag }}
-        imagePullPolicy: {{ $root.Values.gitSyncImage.pullPolicy }}
-        env:
-        - name: GIT_SYNC_REPO
-          value: {{ .gitRepo }}
-        - name: GIT_SYNC_BRANCH
-          value: {{ .gitBranch }}
-        - name: GIT_SYNC_DEST
-          value: {{ .name }}
-        - name: GIT_SYNC_ONE_TIME
-          value: "true"
-        - name: GIT_SYNC_WAIT
-          value: {{ .fetchWaitSecond | default "0" | quote }}
-        volumeMounts:
-        - name: {{ .name }}
-          mountPath: /git
-      {{- end }}
-      - name: hostfile-initializer
-        image: {{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}
-        imagePullPolicy: {{ .Values.kubectlImage.pullPolicy }}
-        command:
-          - sh
-          - -c
-          - |
-            set -xev
-            touch $HOSTFILE
-            until [ "$(wc -l < $HOSTFILE)" -eq {{ .Values.mpiWorkers.num }} ]; do
-              pod_names=$(kubectl -n {{ .Release.Namespace }} get pod \
-                --selector=app={{ template "..name" . }},release={{ .Release.Name }},role=worker \
-                --field-selector=status.phase=Running \
-                -o=jsonpath='{.items[*].metadata.name}')
-              rm -f $HOSTFILE
-              for p in ${pod_names}; do
-                echo "${p}.{{ .Release.Name }}" >> $HOSTFILE
-              done
-            done
-        env:
-        - name: HOSTFILE
-          value: /mpi-cluster/hostfile
-        volumeMounts:
-        - name: hostfile-dir
-          mountPath: /mpi-cluster
-      containers:
-      - name: mpi-master
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-        - containerPort: 2022
-        env:
-        - name: HOSTFILE
-          value: /mpi-cluster/hostfile
-        volumeMounts:
-        - name: ssh-key
-          mountPath: /ssh-key/openmpi
-        - name: hostfile-dir
-          mountPath: /mpi-cluster
-        {{- range .Values.appCodesToSync }}
-        - name: {{ .name }}
-          mountPath: {{ .mountPath }}
-          {{ if .subPath }}subPath: {{.subPath}} {{ end }}
-        {{- end }}
-        resources:
-{{ toYaml .Values.mpiMaster.resources | indent 10 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-      {{- end }}
-      {{- with .Values.mpiMaster.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-      {{- end }}
-      {{- with .Values.mpiMaster.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-      {{- end }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Release.Name }}-driver
-  labels:
-    app: {{ template "..name" . }}
-    chart: {{ template "..chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-    role: bootstrap
-data:
-  util.sh: |
-    # Constants
-    export SSH_OPTION='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /ssh-key/id_rsa'
-    export KUBE_DNS_CLUSTER_IP=$(kubectl -n kube-system get svc kube-dns -o jsonpath='{.spec.clusterIP}')
-    export CLUSTER_DOMAIN=$(cat /etc/resolv.conf | grep "^search" | head -1 | sed -e 's/ /\n/g' | tail -1)
+    trap "rm -f ${target}_new" EXIT TERM INT KILL
 
-    # Log Utilities
-    function _date() { (TZ=UTC date +"%Y-%m-%dT%H:%M:%SZ") }
-    function log() {
-      local level=$(echo ${1:-info} | tr '[:lower:]' '[:upper:]')
-      shift
-      echo "[$(_date)][kube-openmpi-driver][${level}] $@"
-    }
-    function log_debug() {
-      if [ -n "$DEBUG" ]; then log debug $@; fi
-    }
-    function log_info() {
-      log info $@
-    }
-    function log_warning() {
-      log warning $@
-    }
-    function log_error() {
-      log error $@
-    }
+    cluster_size=$(kubectl -n {{ .Release.Namespace }} get statefulsets {{ .Release.Name }}-worker -o jsonpath='{.status.replicas}')
 
-    # Signal Handler
-    function stop_cluster() {
-      log_info "cleaning up mpi cluster {{ .Release.Name }}."
+    tried=0
+    until [ "$(wc -l < ${target}_new)" -eq $cluster_size ]; do
+      pod_names=$(kubectl -n {{ .Release.Namespace }} get pod \
+        --selector=app={{ template "..name" . }},chart={{ template "..chart" . }},release={{ .Release.Name }},role=worker \
+        --field-selector=status.phase=Running \
+        -o=jsonpath='{.items[*].metadata.name}')
 
-      local master=$(kubectl -n {{ .Release.Namespace }} get pod {{ .Release.Name }}-master -o jsonpath='{.metadata.name}')
-      if [ -n "$master" ]; then
-        kubectl -n {{ .Release.Namespace }} delete pod $master
-      else
-        log_warning "{{ .Release.Name }}-master is already deleted."
+      rm -f ${target}_new
+      for p in ${pod_names}; do
+        echo "${p}.{{ .Release.Name }}" >> ${target}_new
+      done
+
+      tried=$(expr $tried + 1)
+      if [ -n "$max_try" ] && [ $max_try -ge $tried ]; then
+        break
       fi
+    done
 
-      local worker=$(kubectl -n {{ .Release.Namespace }} get statefulsets {{ .Release.Name }}-worker -o jsonpath='{.metadata.name}')
-      if [ -n "$worker" ]; then
-        kubectl -n {{ .Release.Namespace }} delete statefulsets $worker
-      else
-        log_warning "{{ .Release.Name }}-worker is already deleted."
-      fi;
-    }
+    if [ -e ${target}_new ]; then
+      mv ${target}_new ${target}
+    fi
 
-    function signal_handler() {
-      local ret_code=$?
-      log_info "running signal handler. "
-      cat << EOT  > /dev/termination-log
-    {"return_code":"$ret_code"}
-    EOT
-      stop_cluster
-    }
-
-    # Manifest Renerer
-    function render_manifest() {
-      local source_path=$1
-      local target_path=$RENDERED_MANIFEST_DIR/$(basename $source_path)
-      log_info "rendering $source_path into $target_path"
-
-      mkdir -p $RENDERED_MANIFEST_DIR
-      cp $source_path $target_path
-      sed -i -e "s/%%KUBE_DNS_CLUSTER_IP%%/$KUBE_DNS_CLUSTER_IP/g" $target_path
-      sed -i -e "s/%%CLUSTER_DOMAIN%%/$CLUSTER_DOMAIN/g" $target_path
-
-      if grep '%%' $target_path 2>&1 > /dev/null; then
-        log warning "placeholder '%%' remains in $target_path.  bootstrapping will fail.";
-      fi;
-    }
-
-    # wainter for master booting up
-    function wait_for_cluster_up() {
-      local count=0
-      local timeout_second=$1
-      until [ $(kubectl -n {{ .Release.Namespace }} get pod {{ .Release.Name }}-master -o jsonpath='{.status.phase}') == "Running" ]; do
-        sleep 1
-        echo -n '.'
-        count=$((count++))
-        if [ $count -gt $timeout_second ]; then
-          log error "waiting for $timeout"
-          exit 1
-        fi;
-      done;
-      echo ""
-    }
-
-    # wait forever
-    function wait_forever() {
-      while true; do
-        sleep 65535;
-      done;
-    }
-
-    # exit with
-    function exit_with() {
-      local ret=$1
-      log_info ""
-      if [ $ret -eq 0 ]; then
-        log_info "user command finished successfully."
-        log_info "exiting with return code $ret"
-      else
-        log_error "user command finished with error. return code = $ret."
-        log_error "exiting with return code $ret"
-      fi
-      exit $ret
-    }
-
-
-  run.sh: |
-    set -eu -o pipefail
-    SCRIPT_DIR=$(cd $(dirname $0);pwd)
-    source $SCRIPT_DIR/util.sh
-
-    {{- if .Values.mpiMaster.command }}
-    log_info "installing ssh client."
-    apk --no-cache add openssh
-    {{- end }}
-
-    log_info "bootstrapping mpi cluster: {{ .Release.Name }}"
-    render_manifest /manifests/mpi-master.yaml
-    render_manifest /manifests/mpi-worker.yaml
-
-    log_info "installing signal handlers to make sure cleaning up mpi cluster."
-    trap signal_handler EXIT TERM INT KILL
-
-    log_info "starting up mpi cluster"
-    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-worker.yaml
-    kubectl -n {{ .Release.Namespace }} create -f $RENDERED_MANIFEST_DIR/mpi-master.yaml
-
-    {{- if .Values.mpiMaster.command }}
-    log_info "waiting for mpi cluster booting up"
-    wait_for_cluster_up {{ .Values.bootStrap.clusterStartupTimeout }}
-
-    log_info "executing user command on mpi master: {{ .Release.Name }}-master"
-    HOST=openmpi@$(kubectl -n {{ .Release.Namespace }} get pod {{ .Release.Name }}-master -o jsonpath='{.status.podIP}')
-    ssh $SSH_OPTION $HOST << 'EOS'
-
-{{ .Values.mpiMaster.command | indent 4 }}
-
-    EOS
-    exit_with $?
-    {{- else }}
-    log_info "sleeping forever because user doesn't set commands"
-    wait_forever
-    {{- end }}
+{{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
+  hostfile_update_every: {{.Values.mpiMaster.autoUpdateHostfile.updateEvery | default "15" | quote }}
+{{ end }}

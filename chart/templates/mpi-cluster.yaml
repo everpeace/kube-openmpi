@@ -1,0 +1,241 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-worker
+  labels:
+    app: {{ template "..name" . }}
+    chart: {{ template "..chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: worker
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "..name" . }}
+      chart: {{ template "..chart" . }}
+      release: {{ .Release.Name }}
+      heritage: {{ .Release.Service }}
+      role: worker
+  serviceName: {{ .Release.Name }}
+  podManagementPolicy: {{.Values.mpiWorkers.podManagementPolicy}}
+  replicas: {{.Values.mpiWorkers.num}}
+  template:
+    metadata:
+      labels:
+        app: {{ template "..name" . }}
+        chart: {{ template "..chart" . }}
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+        role: worker
+    spec:
+      securityContext:
+{{ toYaml .Values.mpiWorkers.securityContext | indent 8 }}
+      volumes:
+      - name: ssh-key
+        secret:
+          secretName: {{ .Release.Name }}-ssh-key
+          defaultMode: 256
+      - name: utils
+        configMap:
+          name: {{ .Release.Name }}-assets
+          items:
+          - key: gen_hostfile.sh
+            path: gen_hostfile.sh
+            mode: 365
+      {{- range .Values.appCodesToSync }}
+      - name: {{ .name }}
+        emptyDir: {}
+      {{- end }}
+      initContainers:
+      {{- $root := . -}}
+      {{- range .Values.appCodesToSync }}
+      - name: {{ .name }}-fetch
+        image: {{ $root.Values.gitSyncImage.repository }}:{{ $root.Values.gitSyncImage.tag }}
+        imagePullPolicy: {{ $root.Values.gitSyncImage.pullPolicy }}
+        env:
+        - name: GIT_SYNC_REPO
+          value: {{ .gitRepo }}
+        - name: GIT_SYNC_BRANCH
+          value: {{ .gitBranch }}
+        - name: GIT_SYNC_DEST
+          value: {{ .name }}
+        - name: GIT_SYNC_ONE_TIME
+          value: "true"
+        - name: GIT_SYNC_WAIT
+          value: {{ .fetchWaitSecond | default "0" | quote }}
+        volumeMounts:
+        - name: {{ .name }}
+          mountPath: /git
+      {{- end }}
+      containers:
+      - name: mpi-worker
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 2022
+        volumeMounts:
+        - name: ssh-key
+          mountPath: /ssh-key/openmpi
+        - name: utils
+          mountPath: /kube-openmpi/utils
+        {{- range .Values.appCodesToSync }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+          {{ if .subPath }}subPath: {{.subPath}} {{ end }}
+        {{- end }}
+        resources:
+{{ toYaml .Values.mpiWorkers.resources | indent 10 }}
+      {{- with .Values.mpiWorkers.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.mpiWorkers.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.mpiWorkers.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Release.Name }}-master
+  labels:
+    app: {{ template "..name" . }}
+    chart: {{ template "..chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: master
+    {{if .Values.networkPolicy.enabled }}allow_from_external: "true"{{ end }}
+spec:
+  hostname: {{ .Release.Name }}-master
+  subdomain: {{ .Release.Name }}
+  securityContext:
+{{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
+  volumes:
+  - name: hostfile-dir
+    emptyDir: {}
+{{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
+  - name: hostfile-updater-params
+    configMap:
+      name: {{ .Release.Name }}-assets
+      items:
+      - key: hostfile_update_every
+        path: update_every
+{{ end }}
+  - name: utils
+    configMap:
+      name: {{ .Release.Name }}-assets
+      items:
+      - key: gen_hostfile.sh
+        path: gen_hostfile.sh
+        mode: 365
+  - name: ssh-key
+    secret:
+      secretName: {{ .Release.Name }}-ssh-key
+      defaultMode: 256
+  {{- range .Values.appCodesToSync }}
+  - name: {{ .name }}
+    emptyDir: {}
+  {{- end }}
+  initContainers:
+  {{- $root := . }}
+  {{- range .Values.appCodesToSync }}
+  - name: {{ .name }}-fetch
+    image: {{ $root.Values.gitSyncImage.repository }}:{{ $root.Values.gitSyncImage.tag }}
+    imagePullPolicy: {{ $root.Values.gitSyncImage.pullPolicy }}
+    env:
+    - name: GIT_SYNC_REPO
+      value: {{ .gitRepo }}
+    - name: GIT_SYNC_BRANCH
+      value: {{ .gitBranch }}
+    - name: GIT_SYNC_DEST
+      value: {{ .name }}
+    - name: GIT_SYNC_ONE_TIME
+      value: "true"
+    - name: GIT_SYNC_WAIT
+      value: {{ .fetchWaitSecond | default "0" | quote }}
+    volumeMounts:
+    - name: {{ .name }}
+      mountPath: /git
+  {{- end }}
+  - name: hostfile-initializer
+    image: {{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}
+    imagePullPolicy: {{ .Values.kubectlImage.pullPolicy }}
+    command:
+      - sh
+      - -c
+      - |
+        /kube-openmpi/utils/gen_hostfile.sh $HOSTFILE_DIR/hostfile
+    env:
+    - name: HOSTFILE_DIR
+      value: /kube-openmpi/generated
+    volumeMounts:
+    - name: hostfile-dir
+      mountPath: /kube-openmpi/generated
+    - name: utils
+      mountPath: /kube-openmpi/utils
+  containers:
+{{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
+  - name: hostfile-updater
+    image: {{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}
+    imagePullPolicy: {{ .Values.kubectlImage.pullPolicy }}
+    command:
+    - sh
+    - -c
+    - |
+      while true;
+      do
+        /kube-openmpi/utils/gen_hostfile.sh $HOSTFILE_DIR/hostfile 1
+        if [ -e /kube-openmpi/hostfile-updater-params/update_every ]; then
+          SLEEP=$(cat /kube-openmpi/hostfile-updater-params/update_every)
+        fi
+        sleep ${SLEEP:-15}
+      done
+    env:
+    - name: HOSTFILE_DIR
+      value: /kube-openmpi/generated
+    volumeMounts:
+    - name: hostfile-dir
+      mountPath: /kube-openmpi/generated
+    - name: utils
+      mountPath: /kube-openmpi/utils
+    - name: hostfile-updater-params
+      mountPath: /kube-openmpi/hostfile-updater-params
+{{ end }}
+  - name: mpi-master
+    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+    imagePullPolicy: {{ .Values.image.pullPolicy }}
+    ports:
+    - containerPort: 2022
+    env:
+    - name: HOSTFILE
+      value: /kube-openmpi/generated/hostfile
+    volumeMounts:
+    - name: ssh-key
+      mountPath: /ssh-key/openmpi
+    - name: hostfile-dir
+      mountPath: /kube-openmpi/generated/
+    - name: utils
+      mountPath: /kube-openmpi/utils
+    {{- range .Values.appCodesToSync }}
+    - name: {{ .name }}
+      mountPath: {{ .mountPath }}
+      {{ if .subPath }}subPath: {{.subPath}} {{ end }}
+    {{- end }}
+    resources:
+{{ toYaml .Values.mpiMaster.resources | indent 10 }}
+  {{- with .Values.nodeSelector }}
+  nodeSelector:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+  {{- with .Values.mpiMaster.tolerations }}
+  tolerations:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+  {{- with .Values.mpiMaster.affinity }}
+  affinity:
+{{ toYaml . | indent 4 }}
+  {{- end }}

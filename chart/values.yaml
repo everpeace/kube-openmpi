@@ -20,23 +20,6 @@ sshGateway:
   enabled: false
   nodePort: 30220
 
-bootStrap:
-  terminationGracePeriodSeconds: 30
-  clusterStartupTimeout: 30
-  securityContext:
-  #   runAsUser: 1000
-  #   fsGroup: 1000
-  resources:
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
-
 sshKey:
   # id_rsa: |
   #   ...
@@ -44,6 +27,9 @@ sshKey:
   #   ...
 
 mpiMaster:
+  autoUpdateHostfile:
+    enabled: true
+    updateEvery: 15
   # command: |
   #   mpiexec --hostfile /mpi-cluster/hostfile \
   #     --display-map -n 4 -npernode 1 \
@@ -63,7 +49,6 @@ mpiMaster:
   affinity: {}
 
 mpiWorkers:
-  podManagementPolicy: Parallel
   num: 4
   securityContext:
   #   runAsUser: 1000
@@ -77,6 +62,7 @@ mpiWorkers:
     #  cpu: 100m
     #  memory: 128Mi
     #  gpu: 1
+  podManagementPolicy: Parallel
   nodeSelector: {}
   tolerations: []
   affinity: {}

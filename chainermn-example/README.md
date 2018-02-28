@@ -47,8 +47,8 @@ $ kubectl -n $KUBE_NAMESPACE port-forward $MPI_CLUSTER_NAME-master 3333:2022 &
 $ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./.ssh/id_rsa -p 3333 openmpi@localhost
 
 # You can run mpiexec now!
-# hostfile is automatically generated and located '/mpi-cluster/hostfile'
-openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /mpi-cluster/hostfile --display-map -n 2 -npernode 1 -- python3 /chainermn-examples/mnist/train_mnist.py -g
+# hostfile is automatically generated and located '/kube-openmpi/generated/hostfile'
+openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /kube-openmpi/generated/hostfile --display-map -n 2 -npernode 1 -- python3 /chainermn-examples/mnist/train_mnist.py -g
 Warning: Permanently added 'MPI_CLUSTER_NAME-worker-0,172.23.36.171' (ECDSA) to the list of known hosts.
 Warning: Permanently added 'MPI_CLUSTER_NAME-worker-1,172.23.36.38' (ECDSA) to the list of known hosts.
  Data for JOB [28697,1] offset 0

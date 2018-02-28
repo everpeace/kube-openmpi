@@ -48,8 +48,8 @@ $ kubectl -n $KUBE_NAMESPACE port-forward $MPI_CLUSTER_NAME-master 3333:2022 &
 $ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./.ssh/id_rsa -p 3333 openmpi@localhost
 
 # You can run mpiexec now!
-# hostfile is automatically generated and located '/mpi-cluster/hostfile'
-openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /mpi-cluster/hostfile --display-map -n 4 -npernode 1 -- sh -c 'echo $(hostname):hello'
+# hostfile is automatically generated and located '/kube-openmpi/generated/hostfile'
+openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /kube-openmpi/generated/hostfile --display-map -n 4 -npernode 1 -- sh -c 'echo $(hostname):hello'
  Data for JOB [43686,1] offset 0
 
  ========================   JOB MAP   ========================
@@ -71,6 +71,24 @@ MPI_CLUSTER_NAME-worker-1:hello
 MPI_CLUSTER_NAME-worker-2:hello
 MPI_CLUSTER_NAME-worker-0:hello
 MPI_CLUSTER_NAME-worker-3:hello
+```
+
+## Scale Up/Down your cluster
+MPI workers forms [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/). So, you can scale up or down the cluster.
+
+```
+# scale workers from 4 to 3
+$ kubectl -n $KUBE_NAMESPACE scale statefulsets $MPI_CLUSTER_NAME-worker --replicas=3
+statefulset "MPI_CLUSTER_NAME-worker" scaled
+
+# Then you can mpiexec again
+# hostfile will be updated automatically every 15 seconds in default
+$ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./.ssh/id_rsa -p 3333 openmpi@localhost
+openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /kube-openmpi/generated/hostfile --display-map -n 3 -npernode 1 -- sh -c 'echo $(hostname):hello'
+...
+MPI_CLUSTER_NAME-worker-0:hello
+MPI_CLUSTER_NAME-worker-2:hello
+MPI_CLUSTER_NAME-worker-1:hello
 ```
 
 ## Tear Down

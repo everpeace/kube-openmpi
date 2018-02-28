@@ -9,21 +9,9 @@ sshGateway:
   enabled: false
   nodePort: 30220
 
-bootStrap:
-  terminationGracePeriodSeconds: 30
-  clusterStartupTimeout: 30
-  resources:
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
-
 mpiMaster:
+  autoUpdateHostfile:
+    enabled: true
   # command: |
   #   mpiexec --hostfile $HOSTFILE -n 4 -- echo hello
   resources:

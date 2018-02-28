@@ -2,15 +2,27 @@ image:
   repository: _EDIT_ME_
   tag: _EDIT_ME_
 
-bootStrap:
-  terminationGracePeriodSeconds: 90
-  clusterStartupTimeout: 90
+mpiMaster:
+  autoUpdateHostfile:
+    enabled: true
+  # resources:
+  #   limits:
+  #     cpu: 100m
+  #     memory: 128Mi
+  # securityContext:
+  #   runAsUser: 1000
+  #   fsGroup: 1000
 
 mpiWorkers:
   num: 2
   resources:
     limits:
       nvidia.com/gpu: 1
+      # cpu: 100m
+      # memory: 128Mi
+  # securityContext:
+  #   runAsUser: 1000
+  #   fsGroup: 1000
 
 appCodesToSync:
 - name: chainermn
