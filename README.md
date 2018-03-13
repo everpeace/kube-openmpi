@@ -21,6 +21,7 @@ kube-openmpi provides mainly two things:
 - [Use your own custom docker image](#use-your-own-custom-docker-image)
 - [Inject your code to your containers from Github](#inject-your-code-to-your-containers-from-github)
 - [Run kube-openmpi cluster as non-root user](#run-kube-openmpi-cluster-as-non-root-user)
+- [How to use gang-scheduling (i.e. schedule a group of pods at once)](#how-to-user-gang-scheduling-i-e-schedule-a-group-of-pods-at-once)
 - [Release Notes](#release-notes)
 
 
@@ -174,6 +175,16 @@ This creates ubuntu based image, cuda8(cudnn7) image and cuda9(cudnn7) image.
 
 And then, set the `image` in your `values.yaml` and set your uid/gid to `runAsUser`/`fsGroup` as the previous section.
 
+# How to use gang-scheduling (i.e. schedule a group of pods at once)
+As stated kubeflow/tf-operator#165 , spawning multiple kube-openmpi cluster causes deadlock.  To prevent it,  you might want `gang-scheduling` in kubernetes.  Currently, [kubernetes-incubator/kube-arbitrator](https://github.com/kubernetes-incubator/kube-arbitrator) support it.
+
+Please follow the steps:
+
+1. [deploy `kube-batchd` scheduler](https://github.com/kubernetes-incubator/kube-arbitrator/blob/master/doc/usage/batchd_tutorial.md)
+
+2. Edit `customScheduler` section in your `values.yaml`.  Please specify `customScheduler.enabled: true` and `customScheduler.schedulerName: <kube-batchd_scheduler_name>`
+
+3. Deploy your kube-openmpi cluster.
 
 ## Release Notes
 ### __0.5.1__
