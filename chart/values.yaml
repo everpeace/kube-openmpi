@@ -20,6 +20,9 @@ sshGateway:
   enabled: false
   nodePort: 30220
 
+podDisruptionBudget:
+  enabled: true
+
 sshKey:
   # id_rsa: |
   #   ...
