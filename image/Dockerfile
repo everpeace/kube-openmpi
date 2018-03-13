@@ -38,10 +38,13 @@ ARG SSH_USER=openmpi
 ENV SSH_USER=$SSH_USER
 ARG SSH_UID=1000
 ARG SSH_GID=1000
-RUN addgroup --gid $SSH_GID openmpi
+RUN addgroup --gid $SSH_GID $SSH_USER
 RUN adduser -q --gecos "" --disabled-password --uid $SSH_UID --gid $SSH_GID $SSH_USER
 RUN mkdir -p /ssh-key/$SSH_USER && chown -R $SSH_USER:$SSH_USER /ssh-key/$SSH_USER
-RUN mkdir -p /.sshd/host_keys && chown -R $SSH_USER:$SSH_USER /.sshd && chmod 700 /.sshd
+RUN mkdir -p /.sshd/host_keys && \
+  chown -R $SSH_USER:$SSH_USER /.sshd/host_keys && chmod 700 /.sshd/host_keys
+RUN mkdir -p /.sshd/user_keys/$SSH_USER && \
+  chown -R $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER && chmod 700 /.sshd/user_keys/$SSH_USER
 VOLUME /ssh-key/$SSH_USER
 
 ARG HOME=/home/$SSH_USER

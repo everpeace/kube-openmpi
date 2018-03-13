@@ -43,13 +43,13 @@ $ helm template chart --namespace $KUBE_NAMESPACE --name $MPI_CLUSTER_NAME -f va
 # wait until $MPI_CLUSTER_NAME-master is ready
 $ kubectl get -n $KUBE_NAMESPACE po $MPI_CLUSTER_NAME-master
 
-# Then, your cluster is ready to ssh (you need to setup port-forward to the master pod)
-$ kubectl -n $KUBE_NAMESPACE port-forward $MPI_CLUSTER_NAME-master 3333:2022 &
-$ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./.ssh/id_rsa -p 3333 openmpi@localhost
-
 # You can run mpiexec now!
 # hostfile is automatically generated and located '/kube-openmpi/generated/hostfile'
-openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /kube-openmpi/generated/hostfile --display-map -n 4 -npernode 1 -- sh -c 'echo $(hostname):hello'
+$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master bash
+root@MPI_CLUSTER_NAME-master:~# mpiexec --allow-run-as-root \
+  --hostfile /kube-openmpi/generated/hostfile \
+  --display-map -n 4 -npernode 1 \
+  -- sh -c 'echo $(hostname):hello'
  Data for JOB [43686,1] offset 0
 
  ========================   JOB MAP   ========================
@@ -83,8 +83,11 @@ statefulset "MPI_CLUSTER_NAME-worker" scaled
 
 # Then you can mpiexec again
 # hostfile will be updated automatically every 15 seconds in default
-$ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./.ssh/id_rsa -p 3333 openmpi@localhost
-openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /kube-openmpi/generated/hostfile --display-map -n 3 -npernode 1 -- sh -c 'echo $(hostname):hello'
+$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master bash
+root@MPI_CLUSTER_NAME-master:~# mpiexec --allow-run-as-root \
+  --hostfile /kube-openmpi/generated/hostfile \
+  --display-map -n 3 -npernode 1 \
+  -- sh -c 'echo $(hostname):hello'
 ...
 MPI_CLUSTER_NAME-worker-0:hello
 MPI_CLUSTER_NAME-worker-2:hello
@@ -94,10 +97,6 @@ MPI_CLUSTER_NAME-worker-1:hello
 ## Tear Down
 
 ```
-# 1. kill the tunnel
-$ pkill -f "kubectl.*port-forward $MPI_CLUSTER_NAME-master 3333:2022"
-
-# 2.
 $ helm template chart --namespace $KUBE_NAMESPACE --name $MPI_CLUSTER_NAME -f values.yaml -f ssh-key.yaml | kubectl -n $KUBE_NAMESPACE delete -f -
 ```
 
@@ -125,6 +124,48 @@ appCodesToSync:
   fetchWaitSecond: "120"
   mountPath: /repo
 ```
+
+# Run kube-openmpi cluster as non-root user
+At default, kube-openmpi runs your mpi cluster as root user.  However, from security standpoint, you might want to run your mpi-cluster as non-root user.  There is two way to achieve this.
+
+## Use default `openmpi` user and group
+[kube-openmpi base docker images on DockerHub](https://hub.docker.com/r/everpeace/kube-openmpi/) ships such normal user `openmpi` with `uid=1000`/`gid=1000`.  To make the user run your mpi-cluster,  edit your `values.yaml` to specify SecurityContext like below:
+
+```
+# values.yaml
+...
+mpiMaster:
+  securityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+...
+mpiWorkers:
+  securityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+```
+
+Then you can run `mpiexec` as `openmpi` user.  You would need to tear down and re-deploy your mpi-cluster if you had kube-openmpi cluster already.
+
+```
+$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master bash
+openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /kube-openmpi/generated/hostfile \
+  --display-map -n 4 -npernode 1 \
+  -- sh -c 'echo $(hostname):hello'
+...
+```
+
+## Use your own custom user with custom uid/gid
+You need to build your own custom base image because the custom user with your desired uid/gid must exists(embedded) in the docker image.  To do this, just run `make` with several options below.
+
+```
+$ cd images
+$ make REPOSITORY=<your_org>/<your_repo> SSH_USER=<username> SSH_UID=<uid> SSH_GID=<gid>
+```
+
+This creates ubuntu based image, cuda8(cudnn7) image and cuda9(cudnn7) image.
+
+And then, set the `image` in your `values.yaml` and set your uid/gid to `runAsUser`/`fsGroup` as the previous section.
 
 
 ## Release Notes

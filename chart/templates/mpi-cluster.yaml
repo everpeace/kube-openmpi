@@ -178,6 +178,28 @@ spec:
     - name: utils
       mountPath: /kube-openmpi/utils
   containers:
+  - name: mpi-master
+    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+    imagePullPolicy: {{ .Values.image.pullPolicy }}
+    ports:
+    - containerPort: 2022
+    env:
+    - name: HOSTFILE
+      value: /kube-openmpi/generated/hostfile
+    volumeMounts:
+    - name: ssh-key
+      mountPath: /ssh-key/openmpi
+    - name: hostfile-dir
+      mountPath: /kube-openmpi/generated/
+    - name: utils
+      mountPath: /kube-openmpi/utils
+    {{- range .Values.appCodesToSync }}
+    - name: {{ .name }}
+      mountPath: {{ .mountPath }}
+      {{ if .subPath }}subPath: {{.subPath}} {{ end }}
+    {{- end }}
+    resources:
+{{ toYaml .Values.mpiMaster.resources | indent 10 }}
 {{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
   - name: hostfile-updater
     image: {{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}
@@ -205,28 +227,6 @@ spec:
     - name: hostfile-updater-params
       mountPath: /kube-openmpi/hostfile-updater-params
 {{ end }}
-  - name: mpi-master
-    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-    imagePullPolicy: {{ .Values.image.pullPolicy }}
-    ports:
-    - containerPort: 2022
-    env:
-    - name: HOSTFILE
-      value: /kube-openmpi/generated/hostfile
-    volumeMounts:
-    - name: ssh-key
-      mountPath: /ssh-key/openmpi
-    - name: hostfile-dir
-      mountPath: /kube-openmpi/generated/
-    - name: utils
-      mountPath: /kube-openmpi/utils
-    {{- range .Values.appCodesToSync }}
-    - name: {{ .name }}
-      mountPath: {{ .mountPath }}
-      {{ if .subPath }}subPath: {{.subPath}} {{ end }}
-    {{- end }}
-    resources:
-{{ toYaml .Values.mpiMaster.resources | indent 10 }}
   {{- with .Values.nodeSelector }}
   nodeSelector:
 {{ toYaml . | indent 4 }}
