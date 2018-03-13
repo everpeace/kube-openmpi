@@ -23,6 +23,10 @@ sshGateway:
 podDisruptionBudget:
   enabled: true
 
+customScheduler:
+  enabled: false
+  schedulerName: kuber-batchd
+
 sshKey:
   # id_rsa: |
   #   ...

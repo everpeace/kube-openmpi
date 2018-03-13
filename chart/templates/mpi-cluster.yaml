@@ -43,6 +43,9 @@ spec:
         heritage: {{ .Release.Service }}
         role: worker
     spec:
+{{- if .Values.customScheduler.enabled }}
+      schedulerName: {{.Values.customScheduler.schedulerName}}
+{{- end }}
       securityContext:
 {{ toYaml .Values.mpiWorkers.securityContext | indent 8 }}
       volumes:
@@ -133,6 +136,9 @@ metadata:
 spec:
   hostname: {{ .Release.Name }}-master
   subdomain: {{ .Release.Name }}
+{{- if .Values.customScheduler.enabled }}
+  schedulerName: {{.Values.customScheduler.schedulerName}}
+{{- end }}
   securityContext:
 {{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
   volumes:
