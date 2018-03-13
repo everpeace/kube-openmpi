@@ -33,6 +33,9 @@ mpiMaster:
   securityContext:
   #   runAsUser: 1000
   #   fsGroup: 1000
+  customScheduling:
+    enabled: false
+    schedulerName: ""
   resources:
     # limits:
     #  cpu: 100m
@@ -51,6 +54,11 @@ mpiWorkers:
   securityContext:
   #   runAsUser: 1000
   #   fsGroup: 1000
+  customScheduling:
+    enabled: false
+    schedulerName: ""
+    podDisruptionBudget:
+      enabled: false
   resources:
     # limits:
     #  cpu: 100m
