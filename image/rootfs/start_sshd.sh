@@ -1,20 +1,37 @@
 #! /bin/sh
 
+ME=$(id -u)
+MY_NAME=$(getent passwd "$ME" | cut -d: -f1)
+
+if [ "$ME" = "0" ]; then
+  PERMIT_ROOT_LOGIN=yes
+else
+  PERMIT_ROOT_LOGIN=no
+fi
+
 # Generating ephemeral hostkeys
 ssh-keygen -f /.sshd/host_keys/host_rsa_key -C '' -N '' -t rsa
 ssh-keygen -f /.sshd/host_keys/host_dsa_key -C '' -N '' -t dsa
 
 # copy mounted user($SSH_USER) key files to local directory
 # to correct their permissions (600 for files, 700 for directories).
-mkdir -p /.sshd/user_keys/$SSH_USER
-chmod 700 /.sshd/user_keys/$SSH_USER
-chown $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER
-cp /ssh-key/$SSH_USER/* /.sshd/user_keys/$SSH_USER/
-chmod 600 /.sshd/user_keys/$SSH_USER/*
-chown $SSH_USER:$SSH_USER /.sshd/user_keys/$SSH_USER/*
+create_ssh_key() {
+  user=$1
+  mkdir -p /.sshd/user_keys/$user
+  chmod 700 /.sshd/user_keys/$user
+  chown $user:$user /.sshd/user_keys/$user
+  cp /ssh-key/$SSH_USER/* /.sshd/user_keys/$user/
+  chmod 600 /.sshd/user_keys/$user/*
+  chown $user:$user /.sshd/user_keys/$user/*
+}
+
+create_ssh_key $SSH_USER
+if [ "$ME" = "0" ]; then
+  create_ssh_key root
+fi
 
 # generating sshd_config
-cat << EOT > /.sshd/sshd_config
+cat << EOT > /.sshd/user_keys/$MY_NAME/sshd_config
 # Package generated configuration file
 # See the sshd_config(5) manpage for details
 
@@ -24,6 +41,8 @@ Port 2022
 #ListenAddress ::
 #ListenAddress 0.0.0.0
 Protocol 2
+
+PidFile /.sshd/user_keys/$MY_NAME/sshd.pid
 
 # HostKeys for protocol version 2
 HostKey /.sshd/host_keys/host_rsa_key
@@ -42,7 +61,7 @@ LogLevel INFO
 
 # Authentication:
 LoginGraceTime 120
-PermitRootLogin no
+PermitRootLogin $PERMIT_ROOT_LOGIN
 StrictModes yes
 
 RSAAuthentication yes
@@ -98,6 +117,6 @@ EOT
 while true
 do
   echo "starting sshd"
-  /usr/sbin/sshd -eD -f /.sshd/sshd_config
+  /usr/sbin/sshd -eD -f /.sshd/user_keys/$MY_NAME/sshd_config
   echo "sshd exited with return code $?"
 done
