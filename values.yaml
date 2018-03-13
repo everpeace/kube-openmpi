@@ -1,6 +1,6 @@
 image:
   repository: everpeace/kube-openmpi
-  tag: 0.4.0
+  tag: 0.5.0
 
 networkPolicy:
   enabled: false
@@ -14,6 +14,9 @@ mpiMaster:
     enabled: true
   # command: |
   #   mpiexec --hostfile $HOSTFILE -n 4 -- echo hello
+  # securityContext:
+  #   runAsUser: 1000
+  #   fsGroup: 1000
   resources:
     # limits:
     #  cpu: 100m
@@ -27,6 +30,9 @@ mpiMaster:
 
 mpiWorkers:
   num: 4
+  # securityContext:
+  #   runAsUser: 1000
+  #   fsGroup: 1000
   resources:
     # limits:
     #  cpu: 100m

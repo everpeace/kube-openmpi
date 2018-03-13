@@ -6,12 +6,12 @@ kube-openmpi provides mainly two things:
 - [base docker images on DockerHub](https://hub.docker.com/r/everpeace/kube-openmpi/) to build your custom docker images.  Currently we provide only ubuntu 16.04 based imaages.  To support distributed deep learning workloads, we provides cuda based images, too.  Supported tags are below:
 
 # Supported tags of kube-openmpi base images
-- Plain Ubuntu based: `2.1.2-16.04-0.4.0` / `0.4.0`
+- Plain Ubuntu based: `2.1.2-16.04-0.5.0` / `0.5.0`
   - naming convention: `$(OPENMPI_VERSION)-$(UBUNTU_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(UBUNTU_IMAGE_TAG)` refers to tags of [ubuntu](https://hub.docker.com/_/ubuntu/)
 - Cuda (with cuDNN) based :
-  - cuda8: `2.1.2-8.0-cudnn7-devel-ubuntu16.04-0.4.0` / `0.4.0-cuda8`
-  - cuda9: `2.1.2-9.0-cudnn7-devel-ubuntu16.04-0.4.0` / `0.4.0-cuda9`
+  - cuda8: `2.1.2-8.0-cudnn7-devel-ubuntu16.04-0.5.0` / `0.5.0-cuda8`
+  - cuda9: `2.1.2-9.0-cudnn7-devel-ubuntu16.04-0.5.0` / `0.5.0-cuda9`
   - naming convention is `$(OPENMPI_VERSION)-$(CUDA_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(CUDA_IMAGE_TAG)` refers to tags of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda/)
 
@@ -169,6 +169,15 @@ And then, set the `image` in your `values.yaml` and set your uid/gid to `runAsUs
 
 
 ## Release Notes
+### __0.5.0__
+- docker images:
+  - `root` can ssh to both mpi-master and mpi-workers when containers run as root
+- kubernetes manifests:
+  - now mpi cluster runs as `root` at default
+  - you can use `openmpi` user as before by setting `runAsUser`/`fsGroup` in `values.yaml`
+  - you don't need to dig a tunnel to use `mpiexec` command!
+  - documented how to use your custom user with custom uid/gid
+
 ### __0.4.0__
 - docker images:
   - added `orte_keep_fqdn_hostnames=t` to `openmpi-mca-params.conf`
