@@ -21,7 +21,7 @@ kube-openmpi provides mainly two things:
 - [Use your own custom docker image](#use-your-own-custom-docker-image)
 - [Inject your code to your containers from Github](#inject-your-code-to-your-containers-from-github)
 - [Run kube-openmpi cluster as non-root user](#run-kube-openmpi-cluster-as-non-root-user)
-- [How to use gang-scheduling (i.e. schedule a group of pods at once)](#how-to-user-gang-scheduling-i-e-schedule-a-group-of-pods-at-once)
+- [How to use gang-scheduling (i.e. schedule a group of pods at once)](#how-to-use-gang-scheduling-ie-schedule-a-group-of-pods-at-once)
 - [Release Notes](#release-notes)
 
 
@@ -176,7 +176,7 @@ This creates ubuntu based image, cuda8(cudnn7) image and cuda9(cudnn7) image.
 And then, set the `image` in your `values.yaml` and set your uid/gid to `runAsUser`/`fsGroup` as the previous section.
 
 # How to use gang-scheduling (i.e. schedule a group of pods at once)
-As stated kubeflow/tf-operator#165 , spawning multiple kube-openmpi cluster causes deadlock.  To prevent it,  you might want `gang-scheduling` (i.e schedule multiple pods all together) in kubernetes.  Currently, [kubernetes-incubator/kube-arbitrator](https://github.com/kubernetes-incubator/kube-arbitrator) support it by using `kube-batchd` scheduler and `PodDisruptionBudget`.
+As stated [kubeflow/tf-operator#165](https://github.com/kubeflow/tf-operator/issues/165), spawning multiple kube-openmpi cluster causes deadlock.  To prevent it,  you might want `gang-scheduling` (i.e schedule multiple pods all together) in kubernetes.  Currently, [kubernetes-incubator/kube-arbitrator](https://github.com/kubernetes-incubator/kube-arbitrator) support it by using `kube-batchd` scheduler and `PodDisruptionBudget`.
 
 Please follow the steps:
 
