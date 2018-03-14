@@ -30,10 +30,6 @@ mpiMaster:
   autoUpdateHostfile:
     enabled: true
     updateEvery: 15
-  # command: |
-  #   mpiexec --hostfile /mpi-cluster/hostfile \
-  #     --display-map -n 4 -npernode 1 \
-  #     -- sh -c 'echo $(hostname):hello'
   securityContext:
   #   runAsUser: 1000
   #   fsGroup: 1000

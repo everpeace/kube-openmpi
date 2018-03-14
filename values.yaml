@@ -12,8 +12,6 @@ sshGateway:
 mpiMaster:
   autoUpdateHostfile:
     enabled: true
-  # command: |
-  #   mpiexec --hostfile $HOSTFILE -n 4 -- echo hello
   # securityContext:
   #   runAsUser: 1000
   #   fsGroup: 1000
