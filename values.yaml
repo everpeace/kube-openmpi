@@ -37,6 +37,11 @@ mpiWorkers:
   # securityContext:
   #   runAsUser: 1000
   #   fsGroup: 1000
+  # customScheduling:
+  #   enabled: true
+  #   schedulerName: kube-batchd
+  #   podDisruptionBudget:
+  #     enabled: true
   resources:
     # limits:
     #  cpu: 100m
