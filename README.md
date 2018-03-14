@@ -15,6 +15,15 @@ kube-openmpi provides mainly two things:
   - naming convention is `$(OPENMPI_VERSION)-$(CUDA_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(CUDA_IMAGE_TAG)` refers to tags of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda/)
 
+----
+
+- [Quick Start](#quick-start)
+- [Use your own custom docker image](#use-your-own-custom-docker-image)
+- [Inject your code to your containers from Github](#inject-your-code-to-your-containers-from-github)
+- [Run kube-openmpi cluster as non-root user](#run-kube-openmpi-cluster-as-non-root-user)
+- [Release Notes](#release-notes)
+
+
 # Quick Start
 ## Requirements
 - kubectl: follow [the installation step](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
