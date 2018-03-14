@@ -42,13 +42,12 @@ $ kubectl get -n $KUBE_NAMESPACE po $MPI_CLUSTER_NAME-master
 NAME           READY     STATUS    RESTARTS   AGE
 MPI_CLUSTER_NAME-master   1/1       Running   0          17s
 
-# Then, your cluster is ready to ssh (you need to setup port-forward to the master pod)
-$ kubectl -n $KUBE_NAMESPACE port-forward $MPI_CLUSTER_NAME-master 3333:2022 &
-$ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./.ssh/id_rsa -p 3333 openmpi@localhost
-
-# You can run mpiexec now!
+# You can run mpiexec now via 'kubectl exec'!
 # hostfile is automatically generated and located '/kube-openmpi/generated/hostfile'
-openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /kube-openmpi/generated/hostfile --display-map -n 2 -npernode 1 -- python3 /chainermn-examples/mnist/train_mnist.py -g
+$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master -- mpiexec --allow-run-as-root \
+  --hostfile /kube-openmpi/generated/hostfile \
+  --display-map -n 2 -npernode 1 \
+  python3 /chainermn-examples/mnist/train_mnist.py -g
 Warning: Permanently added 'MPI_CLUSTER_NAME-worker-0,172.23.36.171' (ECDSA) to the list of known hosts.
 Warning: Permanently added 'MPI_CLUSTER_NAME-worker-1,172.23.36.38' (ECDSA) to the list of known hosts.
  Data for JOB [28697,1] offset 0
@@ -86,9 +85,5 @@ Unexpected end of /proc/mounts line `overlay / overlay rw,relatime,lowerdir=/var
 ## Step5. Tear Down
 
 ```
-# 1. kill the tunnel
-$ pkill -f "kubectl.*port-forward $MPI_CLUSTER_NAME-master 3333:2022"
-
-# 2.
 $ helm template ../chart --namespace $KUBE_NAMESPACE --name $MPI_CLUSTER_NAME -f values.yaml -f ssh-key.yaml | kubectl -n $KUBE_NAMESPACE delete -f -
 ```

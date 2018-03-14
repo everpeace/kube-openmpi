@@ -43,13 +43,12 @@ $ helm template chart --namespace $KUBE_NAMESPACE --name $MPI_CLUSTER_NAME -f va
 # wait until $MPI_CLUSTER_NAME-master is ready
 $ kubectl get -n $KUBE_NAMESPACE po $MPI_CLUSTER_NAME-master
 
-# You can run mpiexec now!
+# You can run mpiexec now via 'kubectl exec'!
 # hostfile is automatically generated and located '/kube-openmpi/generated/hostfile'
-$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master bash
-root@MPI_CLUSTER_NAME-master:~# mpiexec --allow-run-as-root \
+$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master -- mpiexec --allow-run-as-root \
   --hostfile /kube-openmpi/generated/hostfile \
   --display-map -n 4 -npernode 1 \
-  -- sh -c 'echo $(hostname):hello'
+  sh -c 'echo $(hostname):hello'
  Data for JOB [43686,1] offset 0
 
  ========================   JOB MAP   ========================
@@ -83,11 +82,10 @@ statefulset "MPI_CLUSTER_NAME-worker" scaled
 
 # Then you can mpiexec again
 # hostfile will be updated automatically every 15 seconds in default
-$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master bash
-root@MPI_CLUSTER_NAME-master:~# mpiexec --allow-run-as-root \
+$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master -- mpiexec --allow-run-as-root \
   --hostfile /kube-openmpi/generated/hostfile \
   --display-map -n 3 -npernode 1 \
-  -- sh -c 'echo $(hostname):hello'
+  sh -c 'echo $(hostname):hello'
 ...
 MPI_CLUSTER_NAME-worker-0:hello
 MPI_CLUSTER_NAME-worker-2:hello
@@ -148,10 +146,10 @@ mpiWorkers:
 Then you can run `mpiexec` as `openmpi` user.  You would need to tear down and re-deploy your mpi-cluster if you had kube-openmpi cluster already.
 
 ```
-$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master bash
-openmpi@MPI_CLUSTER_NAME-master:~$ mpiexec --hostfile /kube-openmpi/generated/hostfile \
+$ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master -- mpiexec \
+  --hostfile /kube-openmpi/generated/hostfile \
   --display-map -n 4 -npernode 1 \
-  -- sh -c 'echo $(hostname):hello'
+  sh -c 'echo $(hostname):hello'
 ...
 ```
 
