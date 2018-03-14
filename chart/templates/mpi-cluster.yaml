@@ -46,6 +46,7 @@ spec:
       - name: {{ .name }}
         emptyDir: {}
       {{- end }}
+{{ toYaml .Values.mpiWorkers.volumes | indent  6 }}
       initContainers:
       {{- $root := . -}}
       {{- range .Values.appCodesToSync }}
@@ -83,6 +84,7 @@ spec:
           mountPath: {{ .mountPath }}
           {{ if .subPath }}subPath: {{.subPath}} {{ end }}
         {{- end }}
+{{ toYaml .Values.mpiWorkers.volumeMounts | indent 8 }}
         resources:
 {{ toYaml .Values.mpiWorkers.resources | indent 10 }}
       {{- with .Values.mpiWorkers.nodeSelector }}
@@ -140,6 +142,7 @@ spec:
   - name: {{ .name }}
     emptyDir: {}
   {{- end }}
+{{ toYaml .Values.mpiMaster.volumes | indent 2 }}
   initContainers:
   {{- $root := . }}
   {{- range .Values.appCodesToSync }}
@@ -198,6 +201,7 @@ spec:
       mountPath: {{ .mountPath }}
       {{ if .subPath }}subPath: {{.subPath}} {{ end }}
     {{- end }}
+{{ toYaml .Values.mpiMaster.volumeMounts | indent 4 }}
     resources:
 {{ toYaml .Values.mpiMaster.resources | indent 10 }}
 {{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
