@@ -31,11 +31,11 @@ spec:
       securityContext:
 {{ toYaml .Values.mpiWorkers.securityContext | indent 8 }}
       volumes:
-      - name: ssh-key
+      - name: kube-openmpi-ssh-key
         secret:
           secretName: {{ .Release.Name }}-ssh-key
           defaultMode: 256
-      - name: utils
+      - name: kube-openmpi-utils
         configMap:
           name: {{ .Release.Name }}-assets
           items:
@@ -43,9 +43,12 @@ spec:
             path: gen_hostfile.sh
             mode: 365
       {{- range .Values.appCodesToSync }}
-      - name: {{ .name }}
+      - name: kube-openmpi-sync-{{ .name }}
         emptyDir: {}
       {{- end }}
+{{ if .Values.mpiWorkers.volumes }}
+{{ toYaml .Values.mpiWorkers.volumes | indent  6 }}
+{{ end }}
       initContainers:
       {{- $root := . -}}
       {{- range .Values.appCodesToSync }}
@@ -64,7 +67,7 @@ spec:
         - name: GIT_SYNC_WAIT
           value: {{ .fetchWaitSecond | default "0" | quote }}
         volumeMounts:
-        - name: {{ .name }}
+        - name: kube-openmpi-sync-{{ .name }}
           mountPath: /git
       {{- end }}
       containers:
@@ -74,15 +77,18 @@ spec:
         ports:
         - containerPort: 2022
         volumeMounts:
-        - name: ssh-key
+        - name: kube-openmpi-ssh-key
           mountPath: /ssh-key/openmpi
-        - name: utils
+        - name: kube-openmpi-utils
           mountPath: /kube-openmpi/utils
         {{- range .Values.appCodesToSync }}
-        - name: {{ .name }}
+        - name: kube-openmpi-sync-{{ .name }}
           mountPath: {{ .mountPath }}
           {{ if .subPath }}subPath: {{.subPath}} {{ end }}
         {{- end }}
+{{ if .Values.mpiWorkers.volumeMounts }}
+{{ toYaml .Values.mpiWorkers.volumeMounts | indent 8 }}
+{{ end }}
         resources:
 {{ toYaml .Values.mpiWorkers.resources | indent 10 }}
       {{- with .Values.mpiWorkers.nodeSelector }}
@@ -115,31 +121,34 @@ spec:
   securityContext:
 {{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
   volumes:
-  - name: hostfile-dir
+  - name: kube-openmpi-hostfile-dir
     emptyDir: {}
 {{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
-  - name: hostfile-updater-params
+  - name: kube-openmpi-hostfile-updater-params
     configMap:
       name: {{ .Release.Name }}-assets
       items:
       - key: hostfile_update_every
         path: update_every
 {{ end }}
-  - name: utils
+  - name: kube-openmpi-utils
     configMap:
       name: {{ .Release.Name }}-assets
       items:
       - key: gen_hostfile.sh
         path: gen_hostfile.sh
         mode: 365
-  - name: ssh-key
+  - name: kube-openmpi-ssh-key
     secret:
       secretName: {{ .Release.Name }}-ssh-key
       defaultMode: 256
   {{- range .Values.appCodesToSync }}
-  - name: {{ .name }}
+  - name: kube-openmpi-sync-{{ .name }}
     emptyDir: {}
   {{- end }}
+{{ if .Values.mpiMaster.volumes }}
+{{ toYaml .Values.mpiMaster.volumes | indent 2 }}
+{{ end }}
   initContainers:
   {{- $root := . }}
   {{- range .Values.appCodesToSync }}
@@ -158,7 +167,7 @@ spec:
     - name: GIT_SYNC_WAIT
       value: {{ .fetchWaitSecond | default "0" | quote }}
     volumeMounts:
-    - name: {{ .name }}
+    - name: kube-openmpi-sync-{{ .name }}
       mountPath: /git
   {{- end }}
   - name: hostfile-initializer
@@ -173,9 +182,9 @@ spec:
     - name: HOSTFILE_DIR
       value: /kube-openmpi/generated
     volumeMounts:
-    - name: hostfile-dir
+    - name: kube-openmpi-hostfile-dir
       mountPath: /kube-openmpi/generated
-    - name: utils
+    - name: kube-openmpi-utils
       mountPath: /kube-openmpi/utils
   containers:
   - name: mpi-master
@@ -187,17 +196,20 @@ spec:
     - name: HOSTFILE
       value: /kube-openmpi/generated/hostfile
     volumeMounts:
-    - name: ssh-key
+    - name: kube-openmpi-ssh-key
       mountPath: /ssh-key/openmpi
-    - name: hostfile-dir
+    - name: kube-openmpi-hostfile-dir
       mountPath: /kube-openmpi/generated/
-    - name: utils
+    - name: kube-openmpi-utils
       mountPath: /kube-openmpi/utils
     {{- range .Values.appCodesToSync }}
-    - name: {{ .name }}
+    - name: kube-openmpi-sync-{{ .name }}
       mountPath: {{ .mountPath }}
       {{ if .subPath }}subPath: {{.subPath}} {{ end }}
     {{- end }}
+{{ if .Values.mpiMaster.volumeMounts  }}
+{{ toYaml .Values.mpiMaster.volumeMounts | indent 4 }}
+{{ end }}
     resources:
 {{ toYaml .Values.mpiMaster.resources | indent 10 }}
 {{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
@@ -220,11 +232,11 @@ spec:
     - name: HOSTFILE_DIR
       value: /kube-openmpi/generated
     volumeMounts:
-    - name: hostfile-dir
+    - name: kube-openmpi-hostfile-dir
       mountPath: /kube-openmpi/generated
-    - name: utils
+    - name: kube-openmpi-utils
       mountPath: /kube-openmpi/utils
-    - name: hostfile-updater-params
+    - name: kube-openmpi-hostfile-updater-params
       mountPath: /kube-openmpi/hostfile-updater-params
 {{ end }}
   {{- with .Values.nodeSelector }}

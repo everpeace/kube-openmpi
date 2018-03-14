@@ -208,8 +208,6 @@ And then, set the `image` in your `values.yaml` and set your uid/gid to `runAsUs
 
 
 # TODO
-- [ ] How to use custom user id
 - [ ] automate the process (create kube-openmpi commnd?)
 - [ ] document chart parameters
-- [ ] add additional volume mounts
 - [ ] add additional persistent volume claims
