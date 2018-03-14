@@ -20,6 +20,13 @@ sshGateway:
   enabled: false
   nodePort: 30220
 
+podDisruptionBudget:
+  enabled: true
+
+customScheduler:
+  enabled: false
+  schedulerName: kuber-batchd
+
 sshKey:
   # id_rsa: |
   #   ...

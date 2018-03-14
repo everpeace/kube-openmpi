@@ -1,3 +1,18 @@
+{{ if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-pdb
+spec:
+  minAvailable: {{ .Values.mpiWorkers.num | add1 }}
+  selector:
+    matchLabels:
+      app: {{ template "..name" . }}
+      chart: {{ template "..chart" . }}
+      release: {{ .Release.Name }}
+      heritage: {{ .Release.Service }}
+---
+{{ end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -28,6 +43,9 @@ spec:
         heritage: {{ .Release.Service }}
         role: worker
     spec:
+{{- if .Values.customScheduler.enabled }}
+      schedulerName: {{.Values.customScheduler.schedulerName}}
+{{- end }}
       securityContext:
 {{ toYaml .Values.mpiWorkers.securityContext | indent 8 }}
       volumes:
@@ -118,6 +136,9 @@ metadata:
 spec:
   hostname: {{ .Release.Name }}-master
   subdomain: {{ .Release.Name }}
+{{- if .Values.customScheduler.enabled }}
+  schedulerName: {{.Values.customScheduler.schedulerName}}
+{{- end }}
   securityContext:
 {{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
   volumes:
