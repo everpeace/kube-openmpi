@@ -19,6 +19,7 @@ kube-openmpi provides mainly two things:
 
 - [Quick Start](#quick-start)
 - [Use your own custom docker image](#use-your-own-custom-docker-image)
+  - [Pull an image from Private Registry](#pull-an-image-from-private-registry)
 - [Inject your code to your containers from Github](#inject-your-code-to-your-containers-from-github)
 - [Run kube-openmpi cluster as non-root user](#run-kube-openmpi-cluster-as-non-root-user)
 - [How to use gang-scheduling (i.e. schedule a group of pods at once)](#how-to-use-gang-scheduling-ie-schedule-a-group-of-pods-at-once)
@@ -120,6 +121,19 @@ image:
 It expects that your custom image is based on our base image ([everpeace/kube-openmpi](https://hub.docker.com/r/everpeace/kube-openmpi/)) and does NOT change any ssh/sshd configurations define in `image/Dockerfile` on your custom image.
 
 Please refer to [ChainerMN Example](chainermn-example/README.md) for details.
+
+## Pull an image from Private Registry
+Please create a `Secret` of `docker-registry` type to your namespace by referring [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry).
+
+And then, you can specify the secret name in your `values.yaml`:
+
+```
+image:
+  repository: <your_registry>/<your_org>/<your_image_name>
+  tag: <your_tag>
+  pullSecrets:
+  - name: <docker_registry_secret_name>
+```
 
 # Inject your code to your containers from Github
 kube-openmpi supports to import your codes hosted by github into your containers.  To do it, please edit `appCodesToSync` section in `values.yaml`.  You can define multiple github repositories.
