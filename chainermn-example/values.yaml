@@ -1,6 +1,9 @@
 image:
   repository: _EDIT_ME_
   tag: _EDIT_ME_
+  # pullPolicy: IfNotPresent
+  # pullSecrets:
+  # - name: ""
 
 mpiMaster:
   autoUpdateHostfile:
@@ -35,7 +38,7 @@ mpiWorkers:
   # volumeMounts:
   # - mountPath: /cache
   #   name: cache-volume
-  
+
 appCodesToSync:
 - name: chainermn
   gitRepo: https://github.com/chainer/chainermn.git

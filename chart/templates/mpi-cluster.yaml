@@ -49,6 +49,10 @@ spec:
 {{- end }}
       securityContext:
 {{ toYaml .Values.mpiWorkers.securityContext | indent 8 }}
+{{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 6 }}
+{{- end }}
       volumes:
       - name: kube-openmpi-ssh-key
         secret:
@@ -142,6 +146,10 @@ spec:
 {{- end }}
   securityContext:
 {{ toYaml .Values.mpiMaster.securityContext | indent 8 }}
+{{- if .Values.image.pullSecrets }}
+  imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 2 }}
+{{- end }}
   volumes:
   - name: kube-openmpi-hostfile-dir
     emptyDir: {}
