@@ -77,3 +77,9 @@ appCodesToSync:
 #   fetchWaitSecond: "120"
 #   mountPath: /chainer-examples
 #   subPath: chainer/examples
+# - name: your-secret-repo
+#   gitRepo: git@github.com:your-org/your-secret-repo.git
+#   gitBranch: master
+#   fetchWaitSecond: "120"
+#   mountPath: /your-secret-repo
+#   gitSecretName: git-sync-creds

@@ -21,6 +21,7 @@ kube-openmpi provides mainly two things:
 - [Use your own custom docker image](#use-your-own-custom-docker-image)
   - [Pull an image from Private Registry](#pull-an-image-from-private-registry)
 - [Inject your code to your containers from Github](#inject-your-code-to-your-containers-from-github)
+  - [When Your Code In Private Repository](#when-your-code-in-private-repository)
 - [Run kube-openmpi cluster as non-root user](#run-kube-openmpi-cluster-as-non-root-user)
 - [How to use gang-scheduling (i.e. schedule a group of pods at once)](#how-to-use-gang-scheduling-ie-schedule-a-group-of-pods-at-once)
 - [Release Notes](#release-notes)
@@ -145,6 +146,35 @@ appCodesToSync:
   gitBranch: master
   fetchWaitSecond: "120"
   mountPath: /repo
+```
+
+## When Your Code In Private Repository
+When your code are in private git repository.  The secret repo must be able to access via ssh.  
+
+__Please remember this feature requires `securityContext.runAs: 0` for side-car containers fetching your code into mpi containers.__
+
+### Step 1.
+You need to register ssh key to the repo.  I recommend you to set up `Deploy Keys` for your secret repo because it is valid only for the target repository and read-only.
+
+- github: [Managing Deploy Keys | Github Developer Guide](https://developer.github.com/v3/guides/managing-deploy-keys/#deploy-keys)
+- bitbucket: [Use access keys | Bitbucket Support](https://confluence.atlassian.com/bitbucket/use-access-keys-294486051.html)
+
+### Step 2.
+Create `generic` type `Secret` which has a key `ssh` and its value is the private key.
+
+```
+$ kubectl create -n $KUBE_NAMESPACE secret generic <git-sync-cred-name> --from-file=ssh=<deploy-private-key-file>
+```
+### Step 3.
+Then, you can define `appCodesToSync` entries with the secret
+
+```
+- name: <your-secret-repo>
+  gitRepo: git@<git-server>:<your-org>/<your-secret-repo>.git
+  gitBranch: master
+  fetchWaitSecond: "120"
+  mountPath: <mount-point>
+  gitSecretName: <git-sync-cred-name>
 ```
 
 # Run kube-openmpi cluster as non-root user

@@ -68,6 +68,12 @@ spec:
       {{- range .Values.appCodesToSync }}
       - name: kube-openmpi-sync-{{ .name }}
         emptyDir: {}
+        {{- if .gitSecretName }}
+      - name: kube-openmpi-sync-{{ .name }}-secret
+        secret:
+          secretName: {{ .gitSecretName }}
+          defaultMode: 256
+        {{- end }}
       {{- end }}
 {{ if .Values.mpiWorkers.volumes }}
 {{ toYaml .Values.mpiWorkers.volumes | indent  6 }}
@@ -89,9 +95,21 @@ spec:
           value: "true"
         - name: GIT_SYNC_WAIT
           value: {{ .fetchWaitSecond | default "0" | quote }}
+        {{- if .gitSecretName }}
+        - name: GIT_SYNC_SSH
+          value: "true"
+        - name: GIT_KNOWN_HOSTS
+          value: "false"
+        {{- end }}
         volumeMounts:
         - name: kube-openmpi-sync-{{ .name }}
           mountPath: /git
+        {{- if .gitSecretName }}
+        - name: kube-openmpi-sync-{{ .name }}-secret
+          mountPath: /etc/git-secret
+        securityContext:
+          runAsUser: 0
+        {{- end }}
       {{- end }}
       containers:
       - name: mpi-worker
@@ -175,6 +193,12 @@ spec:
   {{- range .Values.appCodesToSync }}
   - name: kube-openmpi-sync-{{ .name }}
     emptyDir: {}
+    {{- if .gitSecretName }}
+  - name: kube-openmpi-sync-{{ .name }}-secret
+    secret:
+      secretName: {{ .gitSecretName }}
+      defaultMode: 256
+    {{- end }}
   {{- end }}
 {{ if .Values.mpiMaster.volumes }}
 {{ toYaml .Values.mpiMaster.volumes | indent 2 }}
@@ -196,9 +220,21 @@ spec:
       value: "true"
     - name: GIT_SYNC_WAIT
       value: {{ .fetchWaitSecond | default "0" | quote }}
+    {{- if .gitSecretName }}
+    - name: GIT_SYNC_SSH
+      value: "true"
+    - name: GIT_KNOWN_HOSTS
+      value: "false"
+    {{- end }}
     volumeMounts:
     - name: kube-openmpi-sync-{{ .name }}
       mountPath: /git
+    {{- if .gitSecretName }}
+    - name: kube-openmpi-sync-{{ .name }}-secret
+      mountPath: /etc/git-secret
+    securityContext:
+      runAsUser: 0
+    {{- end }}
   {{- end }}
   - name: hostfile-initializer
     image: {{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}
