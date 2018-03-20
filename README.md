@@ -9,11 +9,19 @@ kube-openmpi provides mainly two things:
 - Plain Ubuntu based: `2.1.2-16.04-0.5.3` / `0.5.3`
   - naming convention: `$(OPENMPI_VERSION)-$(UBUNTU_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(UBUNTU_IMAGE_TAG)` refers to tags of [ubuntu](https://hub.docker.com/_/ubuntu/)
-- Cuda (with cuDNN) based :
-  - cuda8: `2.1.2-8.0-cudnn7-devel-ubuntu16.04-0.5.3` / `0.5.3-cuda8`
-  - cuda9: `2.1.2-9.0-cudnn7-devel-ubuntu16.04-0.5.3` / `0.5.3-cuda9`
+- Cuda (with cuDNN7) based:
+  - cuda8.0: `2.1.2-8.0-cudnn7-devel-ubuntu16.04-0.5.3` / `0.5.3-cuda8.0`
+  - cuda9.0: `2.1.2-9.0-cudnn7-devel-ubuntu16.04-0.5.3` / `0.5.3-cuda9.0`
+  - cuda9.1: `2.1.2-9.1-cudnn7-devel-ubuntu16.04-0.5.3` / `0.5.3-cuda9.1`
   - naming convention is `$(OPENMPI_VERSION)-$(CUDA_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(CUDA_IMAGE_TAG)` refers to tags of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda/)
+  - see [Dockerfile](image/Dockerfile)
+- Chainer, Cupy, ChainerMN image:
+  - cuda8.0: `0.5.3-cuda8.0-nccl2.1.4-1-chainer4.0.0b4-chainermn1.2.0`
+  - cuda9.0: `0.5.3-cuda9.0-nccl2.1.15-1-chainer4.0.0b4-chainermn1.2.0`
+  - cuda9.1: `0.5.3-cuda9.1-nccl2.1.15-1-chainer4.0.0b4-chainermn1.2.0`
+  - naming convention is `$(KUBE_OPENMPI_VERSION)-$(CUDA_VERSION)-nccl$(NCCL_CUDA80_PACKAGE_VERSION)-chainer$(CHAINER_VERSION)-chainermn$(CHAINER_MN_VERSION)`
+  - see [Dockerfile.chainermn](image/Dockerfile.chainermn)
 
 ----
 
