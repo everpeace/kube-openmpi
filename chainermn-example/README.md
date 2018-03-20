@@ -1,5 +1,5 @@
 
-# ChainerMN example on kube-openmpi
+# Custom ChainerMN image example on kube-openmpi
 This example shows how to make ChainerMN docker image extending kube-openmpi base image.  And how to use it.
 
 __Please be advised ChainerMN base container image are provided at DockerHub already.  This is only for sample.__
