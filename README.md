@@ -32,6 +32,7 @@ kube-openmpi provides mainly two things:
   - [When Your Code In Private Repository](#when-your-code-in-private-repository)
 - [Run kube-openmpi cluster as non-root user](#run-kube-openmpi-cluster-as-non-root-user)
 - [How to use gang-scheduling (i.e. schedule a group of pods at once)](#how-to-use-gang-scheduling-ie-schedule-a-group-of-pods-at-once)
+- [Run ChainerMN Job](#run-chainermn-job)
 - [Release Notes](#release-notes)
 
 
@@ -246,6 +247,75 @@ Please follow the steps:
    ```
 
 3. Deploy your kube-openmpi cluster.
+
+
+# Run ChainerMN Job
+We published Chainer,ChainerMN(with CuPy and NCCL2) based image. Let's use it.  In this example, we run `train_mnist` example in ChainerMN repo.  If you wanted to build your own docker image.  Please refer to [ChainerMN Example](chainermn-example/README.md) for details.
+
+1. edit your `values.yaml` so that
+  - kube-openmpi uses the image.
+  - allocate `2` mpi workers and assign `1` GPU resource to each mpi worker.
+  - add `appCodesToSync` entry to run `train_mnist` example with ChainerMN.
+
+  ```
+  image:
+    repository: everpeace/kube-openmpi
+    tag: 0.5.3-cuda8.0-nccl2.1.4-1-chainer4.0.0b4-chainermn1.2.0
+  ...
+  mpiWorkers:
+    num: 2
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+  ...
+  appCodesToSync:
+  - name: chainermn
+    gitRepo: https://github.com/chainer/chainermn.git
+    gitBranch: master
+    fetchWaitSecond: "120"
+    mountPath: /chainermn-examples
+    subPath: chainermn/examples
+  ...
+  ```
+
+2. Deploy your kube-openmpi cluster
+
+  ```
+  $ MPI_CLUSTER_NAME=__CHANGE_ME__
+  $ KUBE_NAMESPACE=__CHANGE_ME_
+  $ helm template chart --namespace $KUBE_NAMESPACE --name $MPI_CLUSTER_NAME -f values.yaml -f ssh-key.yaml | kubectl -n $KUBE_NAMESPACE create -f -
+  ```
+
+3. Run `train_mnist` with GPU
+
+  ```
+  $ kubectl -n $KUBE_NAMESPACE exec -it $MPI_CLUSTER_NAME-master -- mpiexec --allow-run-as-root \
+    --hostfile /kube-openmpi/generated/hostfile \
+    --display-map -n 2 -npernode 1 \
+    python3 /chainermn-examples/mnist/train_mnist.py -g
+  ========================   JOB MAP   ========================
+
+  Data for node: MPI_CLUSTER_NAME-worker-0  Num slots: 8    Max slots: 0    Num procs: 1
+         Process OMPI jobid: [28697,1] App: 0 Process rank: 0 Bound: socket 0[core 0[hwt 0-1]]:[BB/../../..][../../../..]
+
+  Data for node: MPI_CLUSTER_NAME-worker-1  Num slots: 8    Max slots: 0    Num procs: 1
+         Process OMPI jobid: [28697,1] App: 0 Process rank: 1 Bound: socket 0[core 0[hwt 0-1]]:[BB/../../..][../../../..]
+
+  =============================================================
+  ==========================================
+  Num process (COMM_WORLD): 2
+  Using GPUs
+  Using hierarchical communicator
+  Num unit: 1000
+  Num Minibatch-size: 100
+  Num epoch: 20
+  ==========================================
+  ...
+  1           0.224002    0.102322              0.9335         0.9695                    17.1341
+  2           0.0733692   0.0672879             0.977967       0.9765                    24.7188
+  ...
+  20          0.00531046  0.105093              0.998267       0.9799                    160.794
+  ```
 
 ## Release Notes
 ### __0.5.3__
