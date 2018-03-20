@@ -130,7 +130,7 @@ image:
 
 It expects that your custom image is based on our base image ([everpeace/kube-openmpi](https://hub.docker.com/r/everpeace/kube-openmpi/)) and does NOT change any ssh/sshd configurations define in `image/Dockerfile` on your custom image.
 
-Please refer to [ChainerMN Example](chainermn-example/README.md) for details.
+Please refer to [Custom ChainerMN image example on kube-openmpi](chainermn-example/README.md) for details.
 
 ## Pull an image from Private Registry
 Please create a `Secret` of `docker-registry` type to your namespace by referring [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry).
@@ -250,7 +250,7 @@ Please follow the steps:
 
 
 # Run ChainerMN Job
-We published Chainer,ChainerMN(with CuPy and NCCL2) based image. Let's use it.  In this example, we run `train_mnist` example in ChainerMN repo.  If you wanted to build your own docker image.  Please refer to [ChainerMN Example](chainermn-example/README.md) for details.
+We published Chainer,ChainerMN(with CuPy and NCCL2) based image. Let's use it.  In this example, we run `train_mnist` example in ChainerMN repo.  If you wanted to build your own docker image.  Please refer to [Custom ChainerMN image example on kube-openmpi](chainermn-example/README.md) for details.
 
 1. edit your `values.yaml` so that
   - kube-openmpi uses the image.
