@@ -35,6 +35,14 @@ mpiMaster:
   securityContext:
   #   runAsUser: 1000
   #   fsGroup: 1000
+  oneShot:
+    enabled: false
+    autoScaleDownWorkers: true
+    command: |
+      mpiexec --allow-run-as-root \
+        --hostfile /kube-openmpi/generated/hostfile \
+        --display-map -n 4 -npernode 1 \
+        sh -c 'echo $(hostname):hello'
   customScheduling:
     enabled: false
     schedulerName: ""

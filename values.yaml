@@ -18,6 +18,15 @@ mpiMaster:
   # securityContext:
   #   runAsUser: 1000
   #   fsGroup: 1000
+  # oneShot:
+  #   enabled: true
+  #   # This will scale workers down to 0 when command completed successfully.
+  #   autoScaleDownWorkers: true
+  #   command: |
+  #     mpiexec --allow-run-as-root \
+  #       --hostfile /kube-openmpi/generated/hostfile \
+  #       --display-map -n 4 -npernode 1 \
+  #       sh -c 'echo $(hostname):hello'
   resources:
     # limits:
     #  cpu: 100m

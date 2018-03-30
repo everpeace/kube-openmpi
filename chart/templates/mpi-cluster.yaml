@@ -157,6 +157,7 @@ metadata:
     role: master
     {{if .Values.networkPolicy.enabled }}allow_from_external: "true"{{ end }}
 spec:
+  restartPolicy: OnFailure
   hostname: {{ .Release.Name }}-master
   subdomain: {{ .Release.Name }}
 {{- if .Values.mpiMaster.customScheduling.enabled }}
@@ -169,6 +170,8 @@ spec:
 {{ toYaml .Values.image.pullSecrets | indent 2 }}
 {{- end }}
   volumes:
+  - name: kube-openmpi-guillotine
+    emptyDir: {}
   - name: kube-openmpi-hostfile-dir
     emptyDir: {}
 {{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
@@ -261,7 +264,19 @@ spec:
     env:
     - name: HOSTFILE
       value: /kube-openmpi/generated/hostfile
+    - name: GUILLOTINE
+      value: /kube-openmpi/guillotine
+    {{- if .Values.mpiMaster.oneShot.enabled }}
+    - name: ONE_SHOT
+      value: "true"
+    command:
+    - /init.sh
+    - |
+{{ .Values.mpiMaster.oneShot.command | indent 6 }}
+    {{- end }}
     volumeMounts:
+    - name: kube-openmpi-guillotine
+      mountPath: /kube-openmpi/guillotine
     - name: kube-openmpi-ssh-key
       mountPath: /ssh-key/openmpi
     - name: kube-openmpi-hostfile-dir
@@ -278,6 +293,34 @@ spec:
 {{ end }}
     resources:
 {{ toYaml .Values.mpiMaster.resources | indent 10 }}
+{{ if .Values.mpiMaster.oneShot.enabled }}
+{{ if .Values.mpiMaster.oneShot.autoScaleDownWorkers }}
+  - name: worker-auto-downing
+    image: {{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}
+    imagePullPolicy: {{ .Values.kubectlImage.pullPolicy }}
+    command:
+    - sh
+    - -c
+    - |
+      while [ ! -e $GUILLOTINE/execute ];
+      do
+        sleep 5;
+        echo -n .
+      done
+      echo
+      return_code=$(cat $GUILLOTINE/execute)
+      if [ "$return_code" = 0 ]; then
+        kubectl -n {{ .Release.Namespace }} scale statefulsets {{ .Release.Name }}-worker --replicas=0
+      fi
+      echo Done.
+    env:
+    - name: GUILLOTINE
+      value: /kube-openmpi/guillotine
+    volumeMounts:
+    - name: kube-openmpi-guillotine
+      mountPath: /kube-openmpi/guillotine
+{{ end }}
+{{ end }}
 {{ if .Values.mpiMaster.autoUpdateHostfile.enabled }}
   - name: hostfile-updater
     image: {{ .Values.kubectlImage.repository }}:{{ .Values.kubectlImage.tag }}
@@ -286,7 +329,7 @@ spec:
     - sh
     - -c
     - |
-      while true;
+      while [ ! -e $GUILLOTINE/execute ];
       do
         /kube-openmpi/utils/gen_hostfile.sh $HOSTFILE_DIR/hostfile 1
         if [ -e /kube-openmpi/hostfile-updater-params/update_every ]; then
@@ -294,12 +337,17 @@ spec:
         fi
         sleep ${SLEEP:-15}
       done
+      echo Done.
     env:
     - name: HOSTFILE_DIR
       value: /kube-openmpi/generated
+    - name: GUILLOTINE
+      value: /kube-openmpi/guillotine
     volumeMounts:
     - name: kube-openmpi-hostfile-dir
       mountPath: /kube-openmpi/generated
+    - name: kube-openmpi-guillotine
+      mountPath: /kube-openmpi/guillotine
     - name: kube-openmpi-utils
       mountPath: /kube-openmpi/utils
     - name: kube-openmpi-hostfile-updater-params
