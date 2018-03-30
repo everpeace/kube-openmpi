@@ -8,6 +8,15 @@ image:
 mpiMaster:
   autoUpdateHostfile:
     enabled: true
+  oneShot:
+    enabled: true
+    # This will scale workers down to 0 when command completed successfully.
+    autoScaleDownWorkers: true
+    command: |
+      mpiexec --allow-run-as-root \
+        --hostfile /kube-openmpi/generated/hostfile \
+        --display-map -n 2 -npernode 1 \
+        python3 /chainermn-examples/mnist/train_mnist.py -g
   # resources:
   #   limits:
   #     cpu: 100m

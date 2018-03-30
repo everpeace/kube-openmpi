@@ -62,4 +62,4 @@ RUN if [ "$WITH_CUDA" = "true" ]; then \
 EXPOSE 2022
 
 # sshd can be run either by root or $SSH_USER
-CMD ["/start_sshd.sh"]
+CMD ["/init.sh"]
