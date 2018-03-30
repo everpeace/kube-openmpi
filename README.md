@@ -6,20 +6,20 @@ kube-openmpi provides mainly two things:
 - [base docker images on DockerHub](https://hub.docker.com/r/everpeace/kube-openmpi/) to build your custom docker images.  Currently we provide only ubuntu 16.04 based imaages.  To support distributed deep learning workloads, we provides cuda based images, too.  Supported tags are below:
 
 # Supported tags of kube-openmpi base images
-- Plain Ubuntu based: `2.1.2-16.04-0.5.3` / `0.5.3`
+- Plain Ubuntu based: `2.1.2-16.04-0.6.0` / `0.6.0`
   - naming convention: `$(OPENMPI_VERSION)-$(UBUNTU_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(UBUNTU_IMAGE_TAG)` refers to tags of [ubuntu](https://hub.docker.com/_/ubuntu/)
 - Cuda (with cuDNN7) based:
-  - cuda8.0: `2.1.2-8.0-cudnn7-devel-ubuntu16.04-0.5.3` / `0.5.3-cuda8.0`
-  - cuda9.0: `2.1.2-9.0-cudnn7-devel-ubuntu16.04-0.5.3` / `0.5.3-cuda9.0`
-  - cuda9.1: `2.1.2-9.1-cudnn7-devel-ubuntu16.04-0.5.3` / `0.5.3-cuda9.1`
+  - cuda8.0: `2.1.2-8.0-cudnn7-devel-ubuntu16.04-0.6.0` / `0.6.0-cuda8.0`
+  - cuda9.0: `2.1.2-9.0-cudnn7-devel-ubuntu16.04-0.6.0` / `0.6.0-cuda9.0`
+  - cuda9.1: `2.1.2-9.1-cudnn7-devel-ubuntu16.04-0.6.0` / `0.6.0-cuda9.1`
   - naming convention is `$(OPENMPI_VERSION)-$(CUDA_IMAGE_TAG)-$(KUBE_OPENMPI_VERSION)`
     - `$(CUDA_IMAGE_TAG)` refers to tags of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda/)
   - see [Dockerfile](image/Dockerfile)
 - Chainer, Cupy, ChainerMN image:
-  - cuda8.0: `0.5.3-cuda8.0-nccl2.1.4-1-chainer4.0.0b4-chainermn1.2.0`
-  - cuda9.0: `0.5.3-cuda9.0-nccl2.1.15-1-chainer4.0.0b4-chainermn1.2.0`
-  - cuda9.1: `0.5.3-cuda9.1-nccl2.1.15-1-chainer4.0.0b4-chainermn1.2.0`
+  - cuda8.0: `0.6.0-cuda8.0-nccl2.1.4-1-chainer4.0.0b4-chainermn1.2.0`
+  - cuda9.0: `0.6.0-cuda9.0-nccl2.1.15-1-chainer4.0.0b4-chainermn1.2.0`
+  - cuda9.1: `0.6.0-cuda9.1-nccl2.1.15-1-chainer4.0.0b4-chainermn1.2.0`
   - naming convention is `$(KUBE_OPENMPI_VERSION)-$(CUDA_VERSION)-nccl$(NCCL_CUDA80_PACKAGE_VERSION)-chainer$(CHAINER_VERSION)-chainermn$(CHAINER_MN_VERSION)`
   - see [Dockerfile.chainermn](image/Dockerfile.chainermn)
 
@@ -260,7 +260,7 @@ We published Chainer,ChainerMN(with CuPy and NCCL2) based image. Let's use it.  
   ```
   image:
     repository: everpeace/kube-openmpi
-    tag: 0.5.3-cuda8.0-nccl2.1.4-1-chainer4.0.0b4-chainermn1.2.0
+    tag: 0.6.0-cuda8.0-nccl2.1.4-1-chainer4.0.0b4-chainermn1.2.0
   ...
   mpiWorkers:
     num: 2
@@ -318,6 +318,13 @@ We published Chainer,ChainerMN(with CuPy and NCCL2) based image. Let's use it.  
   ```
 
 ## Release Notes
+### __0.6.0__
+- docker base images:
+  - __CMD was changed from `start_sshd.sh` to `init.sh`__.  When `ONE_SHOT` was `true`, `init.sh` will execute user command which as passed an arguments to `init.sh` just after sshd was up.
+- kubernetes manifests:
+  - `oneShot` mode is supported.  Auto scale down workers feature is also supported.
+    - In `mpiMaster.oneShot` mode, `mpiMaster.oneShot.command` will be automatically executed in master once cluster was up.  if `mpiMaster.oneShot.autoScaleDownWorkers` was enabled and `mpiMaster.oneShot.command` successfully completed (i.e. return code was `0`), worker cluster will be scaled down to `0`.
+
 ### __0.5.3__
 - docker base images
   - cuda9.0 support added.

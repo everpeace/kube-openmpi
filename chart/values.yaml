@@ -1,6 +1,6 @@
 image:
   repository: everpeace/kube-openmpi
-  tag: 0.5.3
+  tag: 0.6.0
   pullPolicy: IfNotPresent
   # pullSecrets:
   # - name: ""

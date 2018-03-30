@@ -5,7 +5,7 @@ This example shows how to make ChainerMN docker image extending kube-openmpi bas
 __Please be advised ChainerMN base container image are provided at DockerHub already.  This is only for sample.__
 
 ## Step 1.  Build your docker image
-[Dockerfile](Dockerfile) used `everpeace/kube-openmpi:0.5.3-cuda8.0` as base image. And installs:
+[Dockerfile](Dockerfile) used `everpeace/kube-openmpi:0.6.0-cuda8.0` as base image. And installs:
 
 - NCCL `2.1.4-1+cuda8.0`
 - CuPy `4.0.0b3`
