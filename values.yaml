@@ -12,6 +12,10 @@ sshGateway:
   enabled: false
   nodePort: 30220
 
+# kube-openmpi cluster consists of 1-Master and N-Workers.
+# master is the place you will invoke mpirun/mpiexec.
+# 'hostfile' will be automatically generated/updated
+# and is available at '/kube-openmpi/generated/hostfile'.
 mpiMaster:
   autoUpdateHostfile:
     enabled: true
@@ -19,6 +23,7 @@ mpiMaster:
   #   runAsUser: 1000
   #   fsGroup: 1000
   # oneShot:
+  # If oneShot.enabled=true, mater automatically runs oneShot.command and complete self.
   #   enabled: true
   #   # This will scale workers down to 0 when command completed successfully.
   #   autoScaleDownWorkers: true
@@ -45,7 +50,7 @@ mpiMaster:
   #   name: cache-volume
 
 mpiWorkers:
-  num: 4
+  num: 3
   # securityContext:
   #   runAsUser: 1000
   #   fsGroup: 1000

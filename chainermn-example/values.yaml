@@ -5,18 +5,23 @@ image:
   # pullSecrets:
   # - name: ""
 
+# kube-openmpi cluster consists of 1-Master and N-Workers.
+# master is the place you will invoke mpirun/mpiexec.
+# 'hostfile' will be automatically generated/updated
+# and is available at '/kube-openmpi/generated/hostfile'.
 mpiMaster:
   autoUpdateHostfile:
     enabled: true
   oneShot:
+    # If oneShot.enabled=true, mater automatically runs oneShot.command and complete self.
     enabled: true
     # This will scale workers down to 0 when command completed successfully.
     autoScaleDownWorkers: true
     command: |
       mpiexec --allow-run-as-root \
         --hostfile /kube-openmpi/generated/hostfile \
-        --display-map -n 2 -npernode 1 \
-        python3 /chainermn-examples/mnist/train_mnist.py -g
+        --display-map -n 4 -npernode 1 \
+        python3 /chainermn-examples/mnist/train_mnist.py -g -e 2
   # resources:
   #   limits:
   #     cpu: 100m
@@ -32,7 +37,7 @@ mpiMaster:
   #   name: cache-volume
 
 mpiWorkers:
-  num: 2
+  num: 3
   resources:
     limits:
       nvidia.com/gpu: 1
