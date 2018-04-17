@@ -15,5 +15,4 @@ else
 fi
 echo -n "$return_code" > /dev/termination-log
 echo -n "$return_code" > $GUILLOTINE/execute
-ls -l $GUILLOTINE/execute
 exit $return_code
