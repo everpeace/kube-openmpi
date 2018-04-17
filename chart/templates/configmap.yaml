@@ -36,6 +36,8 @@ data:
       fi
     done
 
+    sed -i "1i{{ .Release.Name }}-master.{{ .Release.Name }}" ${target}_new
+
     if [ -e ${target}_new ]; then
       mv ${target}_new ${target}
     fi
