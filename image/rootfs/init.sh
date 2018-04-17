@@ -1,6 +1,6 @@
 #! /bin/sh
 
-/start_sshd.sh >/.sshd/user_keys/sshd.log 2>&1 &
+/start_sshd.sh >/tmp/sshd.log 2>&1 &
 
 # magic sleep for waiting sshd being up
 sleep 5
